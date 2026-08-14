@@ -540,7 +540,7 @@ async def traducir_itinerario(request: Request):
                 f"<strong>Asesoría de Ruta y Carga (Google Fly):</strong><br>"
                 f"• Origen: {origin_iata} | Destino: {destination_iata}<br>"
                 f"• {'Conexión en ' + escala.upper() + ' (' + (horas_escala if horas_escala else 'Tiempo estándar') + ')' if (escala and escala != '') else 'Vuelo directo'}<br>"
-                f"• Ruta verificada para tu total protección y certeza.<br>"
+                f"• Ruta verifcada para tu total protección y certeza.<br>"
                 f"Cumplimiento verificado. Se ha abierto la ventana oficial flotante de Google Flights para tu compra directa y segura."
             )
         else:
