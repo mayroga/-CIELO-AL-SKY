@@ -83,12 +83,32 @@ HTML_INDEX = """<!DOCTYPE html>
             50% { transform: scale(1.3); background-color: #457b9d; }
             100% { transform: scale(1.0); background-color: #a8dadc; }
         }
+        /* Widget flotante ultra discreto en segundo plano para Google Flights */
+        #floating-voice-widget {
+            position: fixed;
+            bottom: 15px;
+            right: 15px;
+            background: #004080;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 999999;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: sans-serif;
+        }
+        #floating-voice-widget.paused {
+            background: #dc3545;
+        }
     </style>
 </head>
 <body>
 
-<div class="main-container">
-    <div id="language-controls" style="text-align: right; margin-bottom: 10px;">
+<div class="main-container" id="setup-container">
+    <div style="text-align: right; margin-bottom: 10px;">
         <button onclick="setLanguage('es')" style="padding: 6px 12px; font-size: 13px;">Español</button>
         <button onclick="setLanguage('en')" style="padding: 6px 12px; font-size: 13px;">English</button>
     </div>
@@ -115,7 +135,7 @@ HTML_INDEX = """<!DOCTYPE html>
 
         <div style="margin-top: 15px;">
             <button id="btn-entrar" class="btn-primary" onclick="iniciarRutaViaje()" disabled style="opacity: 0.5; cursor: not-allowed;">Acepto y Firmar Acuerdo</button>
-            <button id="btn-cerrar" class="btn-danger" onclick="handleClose()">Cerrar</button>
+            <button class="btn-danger" onclick="handleClose()">Cerrar</button>
         </div>
     </div>
 
@@ -144,21 +164,27 @@ HTML_INDEX = """<!DOCTYPE html>
         </div>
     </div>
 
-    <!-- VISTA 3: RELAJACIÓN Y APERTURA LIMPIA DE GOOGLE -->
+    <!-- VISTA 3: RELAJACIÓN Y APERTURA DE GOOGLE CON VOZ ABIERTA -->
     <div id="view-loading" class="hidden">
         <h2 id="load-title">Preparando Tu Tranquilidad</h2>
-        <p style="color: #555; font-size: 13px; line-height: 1.4;">Inhala profundo. Abriremos Google Flights de forma limpia y directa, manteniendo el audio por detrás para guiarte en lo que necesites.</p>
+        <p style="color: #555; font-size: 13px; line-height: 1.4;">Inhala profundo. Abriremos Google Flights de forma limpia, manteniendo el micrófono abierto y activo en segundo plano para escucharte en todo momento.</p>
         
         <div id="breathing-circle"><span id="breath-txt">Inhala calma</span></div>
         
         <div style="background: #e8f4fd; border: 1px solid #bbe1fa; padding: 10px; border-radius: 6px; font-size: 12px; color: #004080; margin: 10px 0; text-align: left; line-height: 1.4;">
-            🎙️ <strong>ASISTENCIA DE VOZ EN SEGUNDO PLANO:</strong> Al abrirse Google, la pantalla quedará 100% limpia y original. El micrófono te escuchará de fondo: di <em>"Apágate", "Pausa", "Silencio"</em> para detener la voz, o <em>"Enciéndete", "Habla"</em> para reactivarla en cualquier momento.
+            🎙️ <strong>MICRÓFONO ABIERTO Y ACTIVO:</strong> Al abrir Google, el micrófono estará escuchando activamente. Di <em>"Pausa"</em> (o <em>"Pause"</em>) para silenciarlo, y <em>"Continúa"</em> (o <em>"Continue"</em>) para reactivarlo al instante.
         </div>
 
         <div style="margin-top: 15px;">
-            <button class="btn-success" onclick="abrirGooglePuroYActivarVoz()">✈️ ABRIR GOOGLE LIMPIO Y ACTIVAR VOZ DE FONDO</button>
+            <button class="btn-success" onclick="abrirGoogleConMicfonoAbierto()">✈️ ABRIR GOOGLE Y ACTIVAR MICRÓFONO EN VIVO</button>
         </div>
     </div>
+</div>
+
+<!-- WIDGET FLOTANTE QUE SE INYECTA O ACTIVA EN GOOGLE FLIGHTS -->
+<div id="floating-voice-widget" class="hidden">
+    <span id="widget-status-txt">🎙️ Micrófono Abierto</span>
+    <button onclick="toggleMicWidget()" id="widget-btn-action" style="background: #fff; color: #004080; border: none; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: bold; cursor: pointer;">Pausa</button>
 </div>
 
 <script>
@@ -178,7 +204,7 @@ const frasesRelajacionES = [
     "7. Un paso a la vez, tu mente descansa.",
     "8. Libera el agobio; mereces un viaje sin estrés.",
     "9. Siente el aire puro llenando tu interior.",
-    "10. Recuerda que puedes decir 'Apágate' o 'Enciéndete' por voz cuando quieras."
+    "10. Recuerda que puedes decir 'Pausa' o 'Continúa' en cualquier momento."
 ];
 
 const frasesRelajacionEN = [
@@ -191,7 +217,7 @@ const frasesRelajacionEN = [
     "7. One step at a time, your mind rests.",
     "8. Let go of overwhelm; enjoy a calm trip.",
     "9. Feel pure air filling your inner self.",
-    "10. Remember you can say 'Turn off' or 'Turn on' by voice."
+    "10. Remember you can say 'Pause' or 'Continue' anytime."
 ];
 
 function obtenerSiguienteFraseSecuencial() {
@@ -287,27 +313,161 @@ function prepararConexionRespiratoria() {
     iniciarCicloRespiratorioDinamico();
 }
 
-function abrirGooglePuroYActivarVoz() {
+function abrirGoogleConMicfonoAbierto() {
     if (breathInterval) {
         clearInterval(breathInterval);
         breathInterval = null;
     }
     
-    // Abrir Google Flights en la misma pestaña o ventana principal de manera totalmente limpia y sin iframes
+    // Guardamos en sessionStorage que el viaje está activo para que al llegar a Google Flights (o abrir ventana) opere el reconocimiento continuo de voz en segundo plano
+    sessionStorage.setItem("al_cielo_voice_active", "true");
+    sessionStorage.setItem("al_cielo_lang", currentLang);
+    
+    // Abrir Google Flights en la misma ventana de forma totalmente limpia y original
     window.location.href = urlGoogleFlightsGlobal;
+}
+
+// Inicialización automática de escucha de voz abierta si estamos en Google Flights o en la app
+window.addEventListener('DOMContentLoaded', () => {
+    let isVoiceActive = sessionStorage.getItem("al_cielo_voice_active");
+    if (isVoiceActive === "true") {
+        let savedLang = sessionStorage.getItem("al_cielo_lang");
+        if (savedLang) currentLang = savedLang;
+        
+        // Ocultar contenedor principal si existiera y mostrar widget flotante discreto en Google Flights
+        let setupContainer = document.getElementById('setup-container');
+        if (setupContainer) setupContainer.classList.add('hidden');
+        
+        let widget = document.getElementById('floating-voice-widget');
+        if (widget) widget.classList.remove('hidden');
+        
+        iniciarReconocimientoVozAbierto();
+        hablarVozClara(currentLang === 'es' ? "Asistente activado en segundo plano. Te escucho." : "Assistant active in the background. Listening.");
+    }
+});
+
+function iniciarReconocimientoVozAbierto() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return;
+    const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRec();
+    recognition.lang = currentLang === 'es' ? 'es-ES' : 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = false;
+
+    recognition.onresult = (event) => {
+        let textoDicho = event.results[event.resultIndex][0].transcript.toLowerCase().trim();
+        
+        // Comandos estrictos por voz: Pausa / Pause y Continúa / Continue
+        if (textoDicho.includes("pausa") || textoDicho.includes("pause") || textoDicho.includes("silencio") || textoDicho.includes("stop")) {
+            micActive = false;
+            actualizarWidgetUI(false);
+            hablarVozClara(currentLang === 'es' ? "Micrófono en pausa." : "Microphone paused.");
+            return;
+        }
+        
+        if (textoDicho.includes("continúa") || textoDicho.includes("continua") || textoDicho.includes("continue") || textoDicho.includes("enciende") || textoDicho.includes("start")) {
+            micActive = true;
+            actualizarWidgetUI(true);
+            hablarVozClara(currentLang === 'es' ? "Micrófono reactivado." : "Microphone active.");
+            return;
+        }
+
+        if (!micActive) return;
+
+        // Responder a dudas generales del usuario por voz en segundo plano
+        procesarDuaVozSegundoplano(textoDicho);
+    };
+
+    recognition.onend = () => {
+        try { recognition.start(); } catch(e) {}
+    };
+    try { recognition.start(); } catch(e) {}
+}
+
+function actualizarWidgetUI(activo) {
+    let widget = document.getElementById('floating-voice-widget');
+    let txt = document.getElementById('widget-status-txt');
+    let btn = document.getElementById('widget-btn-action');
+    if (activo) {
+        widget.classList.remove('paused');
+        txt.innerText = currentLang === 'es' ? "🎙️ Micrófono Abierto" : "🎙️ Mic Open";
+        btn.innerText = currentLang === 'es' ? "Pausa" : "Pause";
+    } else {
+        widget.classList.add('paused');
+        txt.innerText = currentLang === 'es' ? "🔇 En Pausa" : "🔇 Paused";
+        btn.innerText = currentLang === 'es' ? "Continúa" : "Continue";
+    }
+}
+
+function toggleMicWidget() {
+    micActive = !micActive;
+    actualizarWidgetUI(micActive);
+    if (micActive) {
+        hablarVozClara(currentLang === 'es' ? "Micrófono reactivado." : "Microphone active.");
+    } else {
+        hablarVozClara(currentLang === 'es' ? "Micrófono en pausa." : "Microphone paused.");
+    }
+}
+
+function procesarDuaVozSegundoplano(pregunta) {
+    let lower = pregunta.toLowerCase();
+    let respuesta = currentLang === 'es'
+        ? "Revisa con calma las opciones en pantalla. Si te piden un pago o equipaje extra opcional, desmárcalo si no lo deseas."
+        : "Check options calmly. If they ask for optional extra baggage, uncheck it if you don't wish to pay extra.";
+    
+    if (lower.includes("seguro") || lower.includes("insurance")) {
+        respuesta = currentLang === 'es'
+            ? "El seguro es opcional. Búscalo en la pantalla y desmárcalo si prefieres no contratarlo."
+            : "Insurance is optional. Look for it on screen and uncheck it if you prefer not to take it.";
+    } else if (lower.includes("maleta") || lower.includes("equipaje") || lower.includes("bag")) {
+        respuesta = currentLang === 'es'
+            ? "Verifica las condiciones de la tarifa. Si solo incluye artículo personal, asegúrate de no exceder las medidas."
+            : "Check fare conditions. If it only includes a personal item, make sure not to exceed dimensions.";
+    }
+    
+    hablarVozClara(respuesta);
 }
 
 function handleClose() { 
     if (confirm(currentLang === 'es' ? "¿Deseas salir?" : "Do you wish to exit?")) { 
+        sessionStorage.removeItem("al_cielo_voice_active");
         window.location.href = "about:blank"; 
     } 
 }
 
 function setLanguage(lang) {
     currentLang = lang;
+    let t = {
+        es: {
+            title: "AL CIELO",
+            subtitle: "Servicio Profesional Privado de Orientación, Acompañamiento y Blindaje contra Errores de Viaje.",
+            acceptText: "He leído, acepto el acuerdo y firmo para proteger mi proceso de viaje",
+            entrar: "Acepto y Firmar Acuerdo",
+            formTitle: "Datos Completos para Automatización de Vuelo",
+            formDesc: "Llene estos campos para configurar su búsqueda en Google de manera limpia y sin interferencias.",
+            loadTitle: "Preparando Tu Tranquilidad"
+        },
+        en: {
+            title: "TO THE SKY",
+            subtitle: "Private Professional Guidance and Travel Shielding Service.",
+            acceptText: "I have read, accept the agreement and sign to protect my travel process",
+            entrar: "Accept & Sign Agreement",
+            formTitle: "Complete Data for Flight Automation",
+            formDesc: "Fill in these fields so your search is configured cleanly.",
+            loadTitle: "Preparing Your Peace of Mind"
+        }
+    }[lang];
+    
+    document.getElementById('title').innerText = t.title;
+    document.getElementById('subtitle').innerText = t.subtitle;
+    document.getElementById('lbl-accept-text').innerText = t.acceptText;
+    document.getElementById('btn-entrar').innerText = t.entrar;
+    document.getElementById('form-title').innerText = t.formTitle;
+    document.getElementById('form-desc').innerText = t.formDesc;
+    document.getElementById('load-title').innerText = t.loadTitle;
 }
-</script> 
-</body> 
+</script>
+</body>
 </html>
 """
 
