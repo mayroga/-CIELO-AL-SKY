@@ -190,9 +190,18 @@ HTML_INDEX = """<!DOCTYPE html>
         <!-- NUEVA VISTA 4: EL BOTÓN DE LANZAMIENTO ANTIDETECCIÓN PARA EL USUARIO -->
         <div id="view-lanzamiento" class="hidden">
             <h2 style="color: #004080;">¡Tu Viaje Seguro está Listo!</h2>
+            
+            <div id="itinerario-box" style="background: #f8f9fa; border: 1px solid #ccc; padding: 15px; border-radius: 8px; font-size: 14px; line-height: 1.5; margin: 15px 0; text-align: left; border-left: 5px solid #28a745;">
+                <!-- Aquí se inyecta dinámicamente el resumen del itinerario -->
+            </div>
+            
+            <div style="font-size: 16px; font-weight: bold; color: #004080; margin: 15px 0;">
+                Precio Estimado: <span id="precio-box" style="color: #28a745;">Verificando...</span>
+            </div>
+
             <p style="font-size: 15px; color: #444; line-height: 1.5; margin: 20px 0;">Hemos verificado y preparado todo tu itinerario libre de trampas. Para abrir de forma permitida la ventana oficial de Google Flights y activar tu consola flotante de apoyo 24/7 sin bloqueos del navegador, por favor presiona el botón verde de abajo:</p>
             <button class="btn-success" id="btn-abrir-flotante" onclick="abrirVentanaFlotanteOficial()">🚀 ABRIR MI VENTANA DE VUELOS</button>
-            <p style="font-size: 12px; color: #777; margin-top: 15px;">Al dar clic, tus vuelos aparecerán en una pantalla flotante dedicada y tu asistente hablará al oído.</p>
+            <p style="font-size: 12px; color: #777; margin-top: 15px;" id="autopropaganda-nino">Recomendación orientativa sujeta a revisión de los estándares operativos aplicables.</p>
         </div>
     </div>
 </div>
@@ -319,7 +328,6 @@ function iniciarRutaViaje() {
 function speak(text) {
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
-        // RECTIFICADOR DE AUDIO: Limpia códigos HTML para hablar de forma 100% fluida y pura
         let textoLimpio = text.replace(/<\/?[^>]+(>|$)/g, "").replace(/•/g, "").replace(/➔/g, "hacia");
         let utterance = new SpeechSynthesisUtterance(textoLimpio);
         utterance.lang = currentLang === 'es' ? 'es-ES' : 'en-US';
@@ -341,7 +349,7 @@ function iniciarReconocimientoVoz() {
 
     recognition.onresult = (event) => {
         if (!micActive) return;
-        let textoDicho = event.results[event.resultIndex][event.transcript];
+        let textoDicho = event.results[event.resultIndex][0].transcript;
         agregarMensajeChat(currentLang === 'es' ? "Tú (voz): " + textoDicho : "You (voice): " + textoDicho);
         procesarRespuestaAsistente(textoDicho);
     };
@@ -365,7 +373,7 @@ function toggleMic() {
         if(recognition) try { recognition.start(); } catch(e) {}
         speak(currentLang === 'es' ? "Micrófono encendido." : "Microphone on.");
     } else {
-        btn.innerText = currentLang === 'es' ? "独立 🔇 Micrófono OFF" : "🔇 Mic Muted ON";
+        btn.innerText = currentLang === 'es' ? "🔇 Micrófono OFF" : "🔇 Mic Muted ON";
         btn.classList.add('muted');
         status.innerText = currentLang === 'es' ? "Silenciado (puedes escribir)." : "Muted (you can type).";
         if(recognition) recognition.stop();
@@ -435,47 +443,50 @@ async function procesarAsesoria() {
     errBox.classList.add('hidden');
     switchView('view-loading');
 
-    try {
-        let formData = new URLSearchParams();
-        formData.append('origen', org);
-        formData.append('escala', esc);
-        formData.append('destino', dest);
-        formData.append('horas_escala', hrs);
-        formData.append('lang', currentLang);
+    // Simular los 30 segundos de respiro del círculo antes de pasar al lanzamiento
+    setTimeout(async () => {
+        try {
+            let formData = new URLSearchParams();
+            formData.append('origen', org);
+            formData.append('escala', esc);
+            formData.append('destino', dest);
+            formData.append('horas_escala', hrs);
+            formData.append('lang', currentLang);
 
-        let response = await fetch('/traducir_itinerario', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: formData
-        });
+            let response = await fetch('/traducir_itinerario', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: formData
+            });
 
-        if (response.ok) { 
-            let data = await response.json(); 
-            itinerarioBox.innerHTML = `<p>${data.itinerario_masticado}</p>`; 
-            precioBox.innerText = data.precio_real || "Verificado conforme a normativa"; 
-            
-            // Guardar la URL devuelta por FastAPI de forma global para el clic físico legítimo
-            urlGoogleFlightsGlobal = data.url_directa;
-            
-            // Cambiar a la vista intermedia del botón de lanzamiento físico permitido
-            switchView('view-lanzamiento');
-            
-            // Configurar el chat con la explicación adaptada
-            agregarMensajeChat("Copiloto: " + data.itinerario_masticado);
-            
-            // Locución humana nativa de aviso
-            speak(currentLang === 'es' 
-                ? "Tu itinerario está listo. Presiona el botón verde en pantalla para desplegar de forma segura tus vuelos en vivo." 
-                : "Your itinerary is ready. Press the green button on the screen to safely display your live flights.");
-        } else { 
+            if (response.ok) { 
+                let data = await response.json(); 
+                document.getElementById('itinerario-box').innerHTML = `<p>${data.itinerario_masticado}</p>`; 
+                document.getElementById('precio-box').innerText = data.precio_real || "Verificado conforme a normativa"; 
+                
+                // Guardar la URL devuelta por FastAPI de forma global para el clic físico
+                urlGoogleFlightsGlobal = data.url_directa;
+                
+                // Cambiar a la vista intermedia del botón de lanzamiento físico permitido
+                switchView('view-lanzamiento');
+                
+                // Configurar el chat con la explicación adaptada
+                agregarMensajeChat("Copiloto: " + data.itinerario_masticado);
+                
+                // Locución humana nativa de aviso
+                speak(currentLang === 'es' 
+                    ? "Tu itinerario está listo. Presiona el botón verde en pantalla para desplegar de forma segura tus vuelos en vivo." 
+                    : "Your itinerary is ready. Press the green button on the screen to safely display your live flights.");
+            } else { 
+                switchView('view-form');
+                alert("Error en el servidor central de control."); 
+            } 
+        } catch (err) { 
             switchView('view-form');
-            alert("Error en el servidor central de control."); 
+            alert("Error de conexión de red."); 
         } 
-    } catch (err) { 
-        switchView('view-form');
-        alert("Error de conexión de red."); 
-    } 
-    document.getElementById('autopropaganda-nino').innerText = currentLang === 'es' ? "Recomendación orientativa sujeta a revisión de los estándares operativos aplicables." : "Guidance recommendation subject to review of applicable operational standards."; 
+        document.getElementById('autopropaganda-nino').innerText = currentLang === 'es' ? "Recomendación orientativa sujeta a revisión de los estándares operativos aplicables." : "Guidance recommendation subject to review of applicable operational standards."; 
+    }, 4000); // Demora simulada corta y fluida o se puede ajustar a requerimiento
 } 
 
 function abrirVentanaFlotanteOficial() {
@@ -519,23 +530,16 @@ async def traducir_itinerario(request: Request):
         lang = form_data.get("lang", "es").strip() 
 
         origin_iata = origen.upper()[:3] if origen else "MIA" 
-        destination_iata = destino.upper()[:3] if destino else "HAV" 
+        destination_iata = destino.upper()[:3] if destination else "HAV" 
         
         precio_real_str = "$485.00 USD (Verificado en vivo)" 
-        detalles_vuelo = [] 
-        detalles_vuelo.append(f"Ruta verifcada en Google Fly: {origin_iata} ➔ {destination_iata}") 
         
-        if escala and escala != "": 
-            detalles_vuelo.append(f"Conexión registrada en {escala.upper()} ({horas_escala if horas_escala else 'Tiempo estándar'}).") 
-        else: 
-            detalles_vuelo.append("Vuelo directo programado sin escalas.") 
-            
         if lang == "es": 
             texto_masticado = ( 
                 f"<strong>Asesoría de Ruta y Carga (Google Fly):</strong><br>" 
                 f"• Origen: {origin_iata} | Destino: {destination_iata}<br>" 
                 f"• {'Conexión en ' + escala.upper() + ' (' + (horas_escala if horas_escala else 'Tiempo estándar') + ')' if (escala and escala != '') else 'Vuelo directo'}<br>" 
-                f"• Ruta verifcada para tu total protección y certeza.<br>" 
+                f"• Ruta verificada para tu total protección y certeza.<br>" 
                 f"Cumplimiento verificado. Se ha abierto la ventana oficial flotante de Google Flights para tu compra directa y segura." 
             ) 
         else: 
@@ -547,7 +551,7 @@ async def traducir_itinerario(request: Request):
                 f"Compliance verified. The official floating Google Flights window has been opened for your direct and secure purchase." 
             ) 
             
-        url_google_flights = f"https://google.com+{origin_iata}+to+{destination_iata}" 
+        url_google_flights = f"https://www.google.com/travel/flights?q=flights%20from%20{origin_iata}%20to%20{destination_iata}" 
         
         return JSONResponse(content={ 
             "precio_real": precio_real_str, 
