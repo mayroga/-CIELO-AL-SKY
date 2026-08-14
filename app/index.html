@@ -33,6 +33,22 @@
             background-color: #fff;
             transition: all 0.2s ease;
             width: 90%;
+    } 
+    #btn-maps-action { 
+        background-color: #4285f4; /* Google Maps blue original */
+        color: white; 
+        border: none; 
+        font-size: 18px; 
+        padding: 15px 30px; 
+        box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); 
+        width: 90%;
+        font-weight: bold;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    #btn-maps-action:hover { 
+        background-color: #357ae8;            
         }
         .btn-primary { background-color: #004080; color: white; border: none; }
         .btn-primary:hover { background-color: #002d5a; }
@@ -113,16 +129,21 @@
         <div id="breathing-circle"><span id="breath-txt">Inhala</span></div>
         <p id="load-sub" style="font-size: 13px; color: #888;">Relájate un momento mientras el escudo se activa de fondo.</p>
     </div>
-
-    <!-- VISTA 4: EL BOTÓN DE ENLACE NATIVO DIRECTO (ESTILO OPEN THAN GO) -->
-    <div id="view-lanzamiento" class="hidden">
-        <h2 style="color: #004080;">¡Tu Escudo Técnico Está Listo!</h2>
-        <p style="font-size: 15px; color: #444; line-height: 1.5; margin: 20px 0;">Todo ha sido verificado con total certeza. Al presionar el botón verde de abajo, se abrirán tus vuelos en una ventana limpia de Google Flights y tu asistente de voz se quedará escuchando para guiarte en el proceso de pago:</p>
-        
-        <button class="btn-success" onclick="lanzarVuelosYVoz()">🚀 IR A GOOGLE FLIGHTS</button>
-        
-        <p style="font-size: 12px; color: #777; margin-top: 15px;" id="load-sub-legal">Recomendación sujeta a revisión voluntaria del consumidor soberano.</p>
-    </div>
+    
+<!-- VISTA 4. REEMPLAZAR LA VISTA DE LANZAMIENTO COMPLETA POR ESTA INTERFAZ -->
+<div id="view-lanzamiento" class="hidden" style="text-align: center;">
+    <h2 style="color: #004080;">¡Tu Escudo Técnico Está Listo!</h2>
+    <p style="font-size: 15px; color: #444; line-height: 1.5; margin: 20px 0;">
+        Todo ha sido verificado con total certeza. Al presionar el botón oficial de abajo, se abrirán tus vuelos en una ventana flotante limpia de Google Flights de forma autorizada y tu asistente de voz se quedará escuchando para guiarte en el proceso de pago de forma segura:
+    </p>
+    
+    <!-- ACCIÓN FÍSICA DIRECTA QUE ELIMINA EL BLOQUEO DEL NAVEGADOR -->
+    <button id="btn-maps-action" onclick="lanzarVuelosYVoz()">🚀 GOOGLE FLY</button>
+    
+    <p style="font-size: 12px; color: #777; margin-top: 15px;" id="load-sub-legal">
+        Recomendación orientativa sujeta a revisión voluntaria del consumidor soberano.
+    </p>
+</div>
     <!-- VISTA 5: CONSOLA DE ACOMPAÑAMIENTO CON MICRÓFONO ABIERTO Y TECLADO -->
     <div id="view-split" class="hidden">
         <div class="guardian-header">Copiloto Protector 24/7</div>
@@ -315,13 +336,17 @@ function procesarRespuestaAsistente(pregunta) {
 }
 
 function procesarRutaDirecta() {
+    // 1. Capturar los elementos de la interfaz de forma segura
     let orgField = document.getElementById('origen');
     let destField = document.getElementById('destino');
     let escField = document.getElementById('escala');
     let errBox = document.getElementById('error-box');
 
-    if (!orgField || !destField || !orgField.value.trim() || !destField.value.trim()) {
-        let msg = currentLang === 'es' ? "¡Opa! Te saltaste un cuadro vacío obligatorio. Origen y destino son necesarios." : "Oops! You skipped a mandatory blank box. Origin and destination are required.";
+    // 2. Validación amigable para niños de 8 años (Cero llamadas a internet)
+    if (!orgField || !destField || orgField.value.trim() === "" || destField.value.trim() === "") {
+        let msg = currentLang === 'es' 
+            ? "¡Opa! Te saltaste un cuadro vacío obligatorio. Origen y destino son necesarios." 
+            : "Oops! You skipped a mandatory blank box. Origin and destination are required.";
         if (errBox) {
             errBox.innerText = msg;
             errBox.classList.remove('hidden');
@@ -330,6 +355,7 @@ function procesarRutaDirecta() {
         return;
     }
     
+    // 3. Ocultar errores y avanzar de inmediato a la pantalla de relajación
     if (errBox) errBox.classList.add('hidden');
     switchView('view-loading');
 
@@ -337,20 +363,34 @@ function procesarRutaDirecta() {
     let dest = destField.value.trim().toUpperCase().slice(0, 3);
     let esc = escField ? escField.value.trim().toUpperCase() : "";
 
+    // 4. Construcción instantánea del enlace oficial de Google Fly
     urlGoogleFlightsGlobal = `https://google.com{org}+to+${dest}`;
 
+    let textoMasticado = currentLang === 'es'
+        ? `<strong>Asesoría de Ruta:</strong><br>• Origen: ${org} | Destino: ${dest}<br>• ${esc ? 'Escala en ' + esc : 'Vuelo directo'}<br>Ruta configurada con éxito.`
+        : `<strong>Route Advisory:</strong><br>• Origin: ${org} | Destination: ${dest}<br>• ${esc ? 'Stopover in ' + esc : 'Direct flight'}<br>Route successfully configured.`;
+
+    // 5. Temporizador respiratorio local de 30 segundos sin dependencias externas
     let secondsLeft = 30;
     let subText = document.getElementById('load-sub');
     
     let timerInterval = setInterval(() => {
         secondsLeft--;
         if (subText) {
-            subText.innerText = currentLang === 'es' ? `Preparando entorno seguro... ${secondsLeft}s` : `Preparing secure environment... ${secondsLeft}s`;
+            subText.innerText = currentLang === 'es' 
+                ? `Preparando entorno seguro... ${secondsLeft}s` 
+                : `Preparing secure environment... ${secondsLeft}s`;
         }
         
         if (secondsLeft <= 0) {
             clearInterval(timerInterval);
+            
+            // Avanzar a la pantalla del botón verde antibloqueo
             switchView('view-lanzamiento');
+            
+            // Pintar la guía en el chat guardián
+            agregarMensajeChat("Copiloto: " + textoMasticado);
+            
             speak(currentLang === 'es' 
                 ? "Tu espacio de viaje está listo. Presiona el botón verde para abrir tus vuelos." 
                 : "Your travel space is ready. Press the green button to open your flights.");
