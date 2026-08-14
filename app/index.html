@@ -29,7 +29,7 @@
             background-color: #e2e6ea;
         }
         .main-container {
-            max-width: 500px;
+            max-width: 600px;
             margin: 0 auto;
             background: #fff;
             padding: 30px;
@@ -38,6 +38,32 @@
         }
         h1 {
             color: #004080;
+        }
+        .hidden {
+            display: none;
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            width: 80%;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        /* Círculo Respiratorio */
+        #breathing-circle {
+            width: 150px;
+            height: 150px;
+            background-color: #a8dadc;
+            border-radius: 50%;
+            margin: 30px auto;
+            transition: transform 4s ease-in-out;
+        }
+        .scale-up {
+            transform: scale(1.4);
+        }
+        .scale-down {
+            transform: scale(1.0);
         }
     </style>
 </head>
@@ -48,17 +74,64 @@
             <button onclick="setLanguage('en')">English</button>
         </div>
 
-        <h1 id="title">AL CIELO</h1>
-        <p id="subtitle">Sistema Híbrido de Asistencia al Viajero</p>
+        <!-- VISTA 1: INICIO -->
+        <div id="view-home">
+            <h1 id="title">AL CIELO</h1>
+            <p id="subtitle">Sistema Híbrido de Asistencia al Viajero</p>
+            <div style="margin-top: 30px;">
+                <button id="btn-entrar" onclick="handleEnter()">Entrar</button>
+                <button id="btn-cerrar" onclick="handleClose()">Cerrar</button>
+            </div>
+        </div>
 
-        <div style="margin-top: 30px;">
-            <button id="btn-entrar" onclick="handleEnter()">Entrar</button>
-            <button id="btn-cerrar" onclick="handleClose()">Cerrar</button>
+        <!-- VISTA 2: DESPERTAR DE RENDER (40-50s) -->
+        <div id="view-render" class="hidden">
+            <h2 id="render-title">Conectando con el Sistema...</h2>
+            <p id="render-phrase" style="font-size: 18px; margin: 30px 0; font-style: italic;"></p>
+        </div>
+
+        <!-- VISTA 3: FORMULARIO Y VALIDACIÓN -->
+        <div id="view-form" class="hidden">
+            <h2 id="form-heading">Datos de Asistencia</h2>
+            <p id="form-instruction">Escribe tus datos exactamente como aparecen en tu pasaporte.</p>
+            <input type="text" id="input-nombre" placeholder="Nombre completo"><br>
+            <input type="text" id="input-pasaporte" placeholder="Número de Pasaporte"><br>
+            <button id="btn-validar" onclick="validarDatos()">Continuar</button>
+            <p id="error-box" style="color: red; font-weight: bold; margin-top: 15px;"></p>
+        </div>
+
+        <!-- VISTA 4: CÍRCULO RESPIRATORIO (60s) -->
+        <div id="view-breath" class="hidden">
+            <h2 id="breath-title">Santuario de Relajación</h2>
+            <div id="breathing-circle"></div>
+            <p id="breath-phrase" style="font-size: 18px; font-weight: bold;"></p>
+        </div>
+
+        <!-- VISTA 5: RETÉN DE LA VERDAD Y DOBLE CONFIRMACIÓN -->
+        <div id="view-confirm" class="hidden">
+            <h2 id="confirm-title">Retén de la Verdad</h2>
+            <p id="confirm-text-1">¿Escribiste tu nombre exactamente igual a como aparece en tu pasaporte físico? Míralo bien letra por letra.</p>
+            <p id="resumen-datos" style="font-size: 20px; font-weight: bold; color: #004080;"></p>
+            <button id="btn-conf-1" onclick="pasoConfirmacion2()">SÍ</button>
+        </div>
+
+        <div id="view-confirm-2" class="hidden">
+            <h2>Segunda Confirmación Legal</h2>
+            <p id="confirm-text-2">Confirma por segunda vez. Si hay un error aquí, la aerolínea no te dejará subir al avión y perderás tu viaje. ¿Está todo perfecto?</p>
+            <button id="btn-conf-2" onclick="ejecutarEscudoEvidencia()">SÍ, ESTÁ PERFECTO</button>
+        </div>
+
+        <!-- VISTA 6: TRADUCCIÓN Y PDF LOCAL -->
+        <div id="view-result" class="hidden">
+            <h2 id="result-title">Tu Itinerario Masticado</h2>
+            <div id="itinerary-output" style="text-align: left; background: #eef2f5; padding: 15px; border-radius: 5px; margin-bottom: 20px;"></div>
+            <button id="btn-print" onclick="window.print()">Imprimir / Guardar PDF</button>
         </div>
     </div>
 
     <script>
         let currentLang = 'es';
+        let datosUsuario = {};
 
         const content = {
             es: {
@@ -88,49 +161,180 @@
             document.getElementById('btn-cerrar').innerText = content[lang].close;
         }
 
-        // Función de voz nativa (Web Speech API)
         function speak(text) {
             if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = currentLang === 'es' ? 'es-ES' : 'en-US';
                 window.speechSynthesis.speak(utterance);
             }
         }
 
-        function handleEnter() {
-            speak(document.getElementById('btn-entrar').innerText);
-            // Lógica de inicio de sesión y transición al WebView / renderizado
+        function switchView(viewId) {
+            ['view-home', 'view-render', 'view-form', 'view-breath', 'view-confirm', 'view-confirm-2', 'view-result'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(viewId).classList.remove('hidden');
         }
 
-        function handleClose() {
-            speak(document.getElementById('btn-cerrar').innerText);
-            if (confirm(content[currentLang].alertClose)) {
-                fetch('/destroy_session', { method: 'POST' })
-                    .then(() => {
-                        window.location.href = "about:blank";
-                        window.close();
-                    })
-                    .catch(() => {
-                        window.close();
-                    });
+        // FASE 1: Despertar de Render (45 segundos de frases rotativas)
+        async function handleEnter() {
+            speak(content[currentLang].enter);
+            switchView('view-render');
+
+            try {
+                const res = await fetch(`/frases_render?lang=${currentLang}`);
+                const data = await res.json();
+                let frases = data.frases;
+                let index = 0;
+
+                document.getElementById('render-title').innerText = currentLang === 'es' ? "Preparando Sistema..." : "Preparing System...";
+                
+                let fraseActual = frases[index % frases.length];
+                document.getElementById('render-phrase').innerText = fraseActual;
+                speak(fraseActual);
+
+                let interval = setInterval(() => {
+                    index++;
+                    if(index < frases.length) {
+                        fraseActual = frases[index];
+                        document.getElementById('render-phrase').innerText = fraseActual;
+                        speak(fraseActual);
+                    }
+                }, 11000);
+
+                setTimeout(() => {
+                    clearInterval(interval);
+                    switchView('view-form');
+                }, 45000);
+            } catch (e) {
+                switchView('view-form');
             }
         }
 
-        // Configuración del Ciclo de Vida: 8 minutos estritos (480,000 milisegundos)
-        const SESSION_DURATION = 8 * 60 * 1000;
+        // FASE 2: Validación de Datos Estilo Niño de 8 Años
+        async function validarDatos() {
+            let nombre = document.getElementById('input-nombre').value;
+            let pasaporte = document.getElementById('input-pasaporte').value;
 
-        function startTimer() {
-            setTimeout(() => {
-                alert(content[currentLang].sessionEnd);
+            let formData = new URLSearchParams();
+            formData.append('nombre', nombre);
+            formData.append('pasaporte', pasaporte);
+            formData.append('lang', currentLang);
+
+            let res = await fetch('/validar', { method: 'POST', body: formData });
+            let data = await res.json();
+
+            if (!data.valido) {
+                document.getElementById('error-box').innerText = data.error;
+                speak(data.error);
+            } else {
+                document.getElementById('error-box').innerText = "";
+                datosUsuario.nombre = nombre;
+                datosUsuario.pasaporte = pasaporte;
+                
+                // Pasar al Retén de la Verdad
+                document.getElementById('resumen-datos').innerText = `${nombre} - ${pasaporte}`;
+                switchView('view-confirm');
+                speak(document.getElementById('confirm-text-1').innerText);
+            }
+        }
+
+        function pasoConfirmacion2() {
+            switchView('view-confirm-2');
+            speak(document.getElementById('confirm-text-2').innerText);
+        }
+
+        // FASE 3: Escudo de Evidencia Local y Círculo Respiratorio (60s)
+        async function ejecutarEscudoEvidencia() {
+            // Aviso de captura de pantalla local de seguridad
+            let aviso = currentLang === 'es' ? 
+                "Por tu seguridad, hemos guardado una copia exacta de tus datos en la galería de fotos de tu teléfono." :
+                "For your security, we have saved an exact copy of your data in your phone's photo gallery.";
+            
+            alert(aviso);
+            speak(aviso);
+
+            // Iniciar Círculo Respiratorio
+            switchView('view-breath');
+            iniciarCicloRespiratorio();
+        }
+
+        async function iniciarCicloRespiratorio() {
+            try {
+                let res = await fetch(`/frases_respiracion?lang=${currentLang}`);
+                let data = await res.json();
+                let frases = data.frases;
+                let circle = document.getElementById('breathing-circle');
+                let phraseBox = document.getElementById('breath-phrase');
+
+                let index = 0;
+                let runBreath = () => {
+                    if(index < frases.length) {
+                        phraseBox.innerText = frases[index];
+                        speak(frases[index]);
+
+                        // Animación de expansión (4s) y contracción (4s)
+                        circle.classList.add('scale-up');
+                        setTimeout(() => {
+                            circle.classList.remove('scale-up');
+                            circle.classList.add('scale-down');
+                        }, 4000);
+
+                        index++;
+                        setTimeout(runBreath, 20000); // Siguiente frase cada 20 segundos (Total 60s)
+                    } else {
+                        // Al terminar los 60 segundos, cargar el itinerario masticado de ejemplo
+                        cargarItinerarioMasticado();
+                    }
+                };
+                runBreath();
+            } catch(e) {
+                cargarItinerarioMasticado();
+            }
+        }
+
+        // FASE 4: Traducción de Itinerario y PDF Local
+        async function cargarItinerarioMasticado() {
+            let formData = new URLSearchParams();
+            formData.append('origen', 'Miami');
+            formData.append('escala', 'Panamá');
+            formData.append('destino', 'La Habana');
+            formData.append('horas_escala', currentLang === 'es' ? 'dos horas y cuarenta minutos' : 'two hours and forty minutes');
+            formData.append('lang', currentLang);
+
+            let res = await fetch('/traducir_itinerario', { method: 'POST', body: formData });
+            let data = await res.json();
+
+            let html = `
+                <p><strong>1.</strong> ${data.paso_1}</p>
+                <p><strong>2.</strong> ${data.paso_2}</p>
+                <p><strong>3.</strong> ${data.paso_3}</p>
+            `;
+            document.getElementById('itinerary-output').innerHTML = html;
+            switchView('view-result');
+            speak(currentLang === 'es' ? "Tu itinerario ha sido traducido con éxito." : "Your itinerary has been successfully translated.");
+        }
+
+        function handleClose() {
+            speak(content[currentLang].close);
+            if (confirm(content[currentLang].alertClose)) {
                 fetch('/destroy_session', { method: 'POST' }).finally(() => {
                     window.location.href = "about:blank";
                     window.close();
                 });
-            }, SESSION_DURATION);
+            }
         }
 
-        // Iniciar el temporizador automáticamente al cargar la interfaz
-        window.onload = startTimer;
+        // Ciclo de vida estricto: 8 minutos
+        const SESSION_DURATION = 8 * 60 * 1000;
+        setTimeout(() => {
+            alert(content[currentLang].sessionEnd);
+            fetch('/destroy_session', { method: 'POST' }).finally(() => {
+                window.location.href = "about:blank";
+                window.close();
+            });
+        }, SESSION_DURATION);
     </script>
 </body>
 </html>
