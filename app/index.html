@@ -336,43 +336,40 @@ function procesarRespuestaAsistente(pregunta) {
 }
 
 function procesarRutaDirecta() {
-    // 1. Capturar los elementos de la interfaz de forma segura
     let orgField = document.getElementById('origen');
     let destField = document.getElementById('destino');
     let escField = document.getElementById('escala');
     let errBox = document.getElementById('error-box');
 
-    // 2. Validación amigable para niños de 8 años (Cero llamadas a internet)
     if (!orgField || !destField || orgField.value.trim() === "" || destField.value.trim() === "") {
-        let msg = currentLang === 'es' 
-            ? "¡Opa! Te saltaste un cuadro vacío obligatorio. Origen y destino son necesarios." 
-            : "Oops! You skipped a mandatory blank box. Origin and destination are required.";
+        let msg = currentLang === 'es' ? "¡Opa! Te saltaste un cuadro vacío obligatorio. Origen y destino son necesarios." : "Oops! You skipped a mandatory blank box.";
         if (errBox) {
             errBox.innerText = msg;
             errBox.classList.remove('hidden');
         }
-        speak(msg);
+        if (typeof speak === 'function') speak(msg);
         return;
     }
     
-    // 3. Ocultar errores y avanzar de inmediato a la pantalla de relajación
     if (errBox) errBox.classList.add('hidden');
+    
+    // CAMBIO DE VISTA LOCAL DIRECTO (Cero llamadas de red)
     switchView('view-loading');
 
     let org = orgField.value.trim().toUpperCase().slice(0, 3);
     let dest = destField.value.trim().toUpperCase().slice(0, 3);
     let esc = escField ? escField.value.trim().toUpperCase() : "";
 
-    // 4. Construcción instantánea del enlace oficial de Google Fly
+    // Guardar la URL global para el botón azul de Google Fly
     urlGoogleFlightsGlobal = `https://google.com{org}+to+${dest}`;
 
-    let textoMasticado = currentLang === 'es'
-        ? `<strong>Asesoría de Ruta:</strong><br>• Origen: ${org} | Destino: ${dest}<br>• ${esc ? 'Escala en ' + esc : 'Vuelo directo'}<br>Ruta configurada con éxito.`
-        : `<strong>Route Advisory:</strong><br>• Origin: ${org} | Destination: ${dest}<br>• ${esc ? 'Stopover in ' + esc : 'Direct flight'}<br>Route successfully configured.`;
-
-    // 5. Temporizador respiratorio local de 30 segundos sin dependencias externas
+    // TEMPORIZADOR LOCAL PURO DE 30 SEGUNDOS
     let secondsLeft = 30;
     let subText = document.getElementById('load-sub');
+    
+    if (subText) {
+        subText.innerText = currentLang === 'es' ? `Preparando entorno seguro... ${secondsLeft}s` : `Preparing secure environment... ${secondsLeft}s`;
+    }
     
     let timerInterval = setInterval(() => {
         secondsLeft--;
@@ -384,16 +381,10 @@ function procesarRutaDirecta() {
         
         if (secondsLeft <= 0) {
             clearInterval(timerInterval);
-            
-            // Avanzar a la pantalla del botón verde antibloqueo
             switchView('view-lanzamiento');
-            
-            // Pintar la guía en el chat guardián
-            agregarMensajeChat("Copiloto: " + textoMasticado);
-            
-            speak(currentLang === 'es' 
-                ? "Tu espacio de viaje está listo. Presiona el botón verde para abrir tus vuelos." 
-                : "Your travel space is ready. Press the green button to open your flights.");
+            if (typeof speak === 'function') {
+                speak(currentLang === 'es' ? "Tu espacio de viaje está listo. Presiona el botón azul." : "Your travel space is ready.");
+            }
         }
     }, 1000);
 }
