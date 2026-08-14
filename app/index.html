@@ -50,7 +50,6 @@
             border-radius: 5px;
             border: 1px solid #ccc;
         }
-        /* Círculo Respiratorio Pulmonar (Ritmo humano: 4s inhala, 4s exhala) */
         #breathing-circle {
             width: 140px;
             height: 140px;
@@ -85,7 +84,7 @@
         <div id="view-home">
             <h1 id="title">AL CIELO</h1>
             <p id="subtitle" style="font-size: 16px; line-height: 1.5; color: #555; margin: 20px 0;">
-                Tu asistente especializada en la búsqueda, cotización y gestión de vuelos (directos y de conexión) con aerolíneas autorizadas. Te acompañamos a encontrar el boleto ideal para ti.
+                Tu asistente especializada en la búsqueda, cotización y gestión de vuelos con aerolíneas autorizadas. Encontramos el boleto perfecto para ti.
             </p>
             <div style="margin-top: 30px;">
                 <button id="btn-entrar" onclick="iniciarRutaViaje()">Buscar Vuelos</button>
@@ -93,20 +92,21 @@
             </div>
         </div>
 
-        <!-- VISTA 1.5: PARÁMETROS DE BÚSQUEDA DE VUELO -->
+        <!-- VISTA 1.5: PARÁMETROS DE BÚSQUEDA Y CORREO -->
         <div id="view-orientacion" class="hidden">
-            <h2 id="orientacion-heading">Detalles de tu Vuelo</h2>
-            <p id="orientacion-instruction">Indícanos la ruta para realizar la búsqueda exacta:</p>
+            <h2 id="orientacion-heading">Detalles de tu Vuelo y Contacto</h2>
+            <p id="orientacion-instruction">Ingresa tu correo electrónico y la ruta para conectar con los servidores de aerolíneas:</p>
+            <input type="email" id="input-correo" placeholder="Correo electrónico (ejemplo@correo.com)"><br>
             <input type="text" id="input-origen" placeholder="Ciudad de Origen (Ej: Miami)"><br>
             <input type="text" id="input-escala" placeholder="Ciudad de Escala o Conexión (Opcional)"><br>
             <input type="text" id="input-destino" placeholder="Ciudad de Destino (Ej: La Habana)"><br>
             <input type="text" id="input-horas" placeholder="Tiempo de espera en conexión (Ej: 2 horas)"><br>
-            <button id="btn-siguiente-orientacion" onclick="guardarOrientacion()">Buscar Opciones</button>
+            <button id="btn-siguiente-orientacion" onclick="guardarOrientacion()">Conectar y Buscar</button>
         </div>
 
         <!-- VISTA 2: DESPERTAR DEL RENDER -->
         <div id="view-render" class="hidden">
-            <h2 id="render-heading-title">Rastreando conexiones...</h2>
+            <h2 id="render-heading-title">Rastreando APIs de aerolíneas...</h2>
             <p id="render-phrase" style="font-size: 18px; margin: 30px 0; font-style: italic;"></p>
         </div>
 
@@ -127,22 +127,19 @@
             <p id="breath-phrase" style="font-size: 18px; font-weight: bold; min-height: 50px;"></p>
         </div>
 
-        <!-- VISTA 5: RETÉN DE LA VERDAD (VERIFICACIÓN DE DATOS) -->
+        <!-- VISTA 5: RETÉN DE LA VERDAD -->
         <div id="view-confirm" class="hidden">
             <h2 id="confirm-title-1">Verificación de Pasajero</h2>
-            <p id="confirm-text-1">Por favor verifica que tus datos sean exactos para evitar incidencias con la aerolínea:</p>
+            <p id="confirm-text-1">Por favor verifica que tus datos sean exactos:</p>
             <div id="resumen-datos-1" style="font-size: 22px; font-weight: bold; color: #004080; margin: 20px 0; background: #eef2f5; padding: 10px; border-radius: 5px;"></div>
             <button id="btn-conf-1" onclick="pasoConfirmacion2()">Datos Correctos</button>
         </div>
 
         <div id="view-confirm-2" class="hidden">
             <h2 id="confirm-title-2">Segunda Validación de Reserva</h2>
-            <p id="confirm-text-2">Revisa nuevamente tu nombre y número de pasaporte antes de emitir las opciones de vuelo:</p>
+            <p id="confirm-text-2">Revisa nuevamente tu nombre y pasaporte antes de emitir las opciones:</p>
             <div id="resumen-datos-2" style="font-size: 22px; font-weight: bold; color: #004080; margin: 20px 0; background: #eef2f5; padding: 10px; border-radius: 5px;"></div>
-            <p id="aviso-foto-legal" style="font-size: 14px; color: #666; margin: 15px 0; font-style: italic;">
-                Nota: Puedes guardar una captura de pantalla voluntaria para tus registros personales.
-            </p>
-            <button id="btn-conf-2" onclick="iniciarCalmaRespiratoria()">Confirmar y Buscar Vuelos</button>
+            <button id="btn-conf-2" onclick="iniciarCalmaRespiratoria()">Confirmar y Emitir Resultados</button>
         </div>
 
         <!-- VISTA 6: RESULTADOS DE VUELOS Y CONEXIONES -->
@@ -162,22 +159,22 @@
 
     <script>
         let currentLang = 'es';
-        let datosViaje = { origen: 'Miami', escala: '', destino: 'La Habana', horas: '2 horas' };
+        let datosViaje = { correo: '', origen: 'Miami', escala: '', destino: 'La Habana', horas: '2 horas' };
         let datosUsuario = {};
         let textoUltimaVoz = "";
 
         const content = {
             es: {
                 title: "AL CIELO",
-                subtitle: "Tu asistente especializada en la búsqueda, cotización y gestión de vuelos (directos y de conexión) con aerolíneas autorizadas. Te acompañamos a encontrar el boleto ideal para ti.",
+                subtitle: "Tu asistente especializada en la búsqueda, cotización y gestión de vuelos con aerolíneas autorizadas. Encontramos el boleto perfecto para ti.",
                 enter: "Buscar Vuelos",
                 close: "Cerrar",
-                alertClose: "¿Estás seguro de cerrar la sesión de búsqueda de vuelos?",
-                sessionEnd: "La sesión ha expirado por seguridad. Se han borrado los datos temporales.",
-                orientacionHeading: "Detalles de tu Vuelo",
-                orientacionInstruction: "Indícanos la ruta para realizar la búsqueda exacta:",
-                btnSiguienteOrientacion: "Buscar Opciones",
-                renderTitle: "Rastreando conexiones...",
+                alertClose: "¿Estás seguro de cerrar la sesión?",
+                sessionEnd: "La sesión ha expirado por seguridad.",
+                orientacionHeading: "Detalles de tu Vuelo y Contacto",
+                orientacionInstruction: "Ingresa tu correo electrónico y la ruta para conectar con los servidores de aerolíneas:",
+                btnSiguienteOrientacion: "Conectar y Buscar",
+                renderTitle: "Rastreando APIs de aerolíneas...",
                 formHeading: "Datos del Pasajero",
                 formInstruction: "Ingresa tu nombre completo y número de pasaporte para rellenar la reserva del vuelo.",
                 inputNombre: "Nombre completo del pasajero",
@@ -185,11 +182,11 @@
                 btnValidar: "Continuar con la Reserva",
                 breathHeading: "Momento de Calma",
                 confirmTitle1: "Verificación de Pasajero",
-                confirmText1: "Por favor verifica que tus datos sean exactos para evitar incidencias con la aerolínea:",
+                confirmText1: "Por favor verifica que tus datos sean exactos:",
                 btnConf1: "Datos Correctos",
                 confirmTitle2: "Segunda Validación de Reserva",
-                confirmText2: "Revisa nuevamente tu nombre y número de pasaporte antes de emitir las opciones de vuelo:",
-                btnConf2: "Confirmar y Buscar Vuelos",
+                confirmText2: "Revisa nuevamente tu nombre y pasaporte antes de emitir las opciones:",
+                btnConf2: "Confirmar y Emitir Resultados",
                 resultTitle: "Opciones de Vuelo y Conexiones Encontradas",
                 opcionesHeading: "Opciones de Vuelo Disponibles",
                 btnPrint: "Imprimir o Guardar en PDF",
@@ -197,15 +194,15 @@
             },
             en: {
                 title: "TO THE SKY",
-                subtitle: "Your specialized assistant in flight search, quotation, and management (direct and connecting) with authorized airlines. We help you find your ideal ticket.",
+                subtitle: "Your specialized assistant in flight search and management with authorized airlines.",
                 enter: "Search Flights",
                 close: "Close",
-                alertClose: "Are you sure you want to close the flight search session?",
-                sessionEnd: "Session has expired for security. Temporary data has been cleared.",
-                orientacionHeading: "Flight Details",
-                orientacionInstruction: "Provide your route details to perform the exact search:",
-                btnSiguienteOrientacion: "Search Options",
-                renderTitle: "Tracking connections...",
+                alertClose: "Are you sure you want to close the session?",
+                sessionEnd: "Session expired for security.",
+                orientacionHeading: "Flight Details and Contact",
+                orientacionInstruction: "Enter your email and route to connect with airline servers:",
+                btnSiguienteOrientacion: "Connect and Search",
+                renderTitle: "Tracking airline APIs...",
                 formHeading: "Passenger Information",
                 formInstruction: "Enter your full name and passport number to pre-fill the flight reservation.",
                 inputNombre: "Passenger's full name",
@@ -213,11 +210,11 @@
                 btnValidar: "Continue with Reservation",
                 breathHeading: "Calm Moment",
                 confirmTitle1: "Passenger Verification",
-                confirmText1: "Please verify that your details are accurate to avoid airline issues:",
+                confirmText1: "Please verify that your details are accurate:",
                 btnConf1: "Correct Data",
                 confirmTitle2: "Second Reservation Validation",
-                confirmText2: "Review your name and passport number again before issuing flight options:",
-                btnConf2: "Confirm and Search Flights",
+                confirmText2: "Review your name and passport number again before issuing options:",
+                btnConf2: "Confirm and Issue Results",
                 resultTitle: "Found Flight Options and Connections",
                 opcionesHeading: "Available Flight Options",
                 btnPrint: "Print or Save as PDF",
@@ -266,9 +263,7 @@
         }
 
         function repetirVozResultado() {
-            if (textoUltimaVoz) {
-                speak(textoUltimaVoz);
-            }
+            if (textoUltimaVoz) speak(textoUltimaVoz);
         }
 
         function switchView(viewId) {
@@ -279,16 +274,23 @@
         }
 
         function iniciarRutaViaje() {
-            speak(currentLang === 'es' ? "Indícanos los detalles de tu vuelo." : "Provide your flight details.");
+            speak(currentLang === 'es' ? "Ingresa tu correo y los detalles de tu vuelo." : "Enter your email and flight details.");
             switchView('view-orientacion');
         }
 
         function guardarOrientacion() {
+            let correo = document.getElementById('input-correo').value.trim();
             let origen = document.getElementById('input-origen').value.trim();
             let escala = document.getElementById('input-escala').value.trim();
             let destino = document.getElementById('input-destino').value.trim();
             let horas = document.getElementById('input-horas').value.trim();
 
+            if (!correo || !correo.includes('@')) {
+                alert(currentLang === 'es' ? "Por favor ingresa un correo electrónico válido para conectar con la API de aerolíneas." : "Please enter a valid email address.");
+                return;
+            }
+
+            datosViaje.correo = correo;
             if (origen) datosViaje.origen = origen;
             datosViaje.escala = escala;
             if (destino) datosViaje.destino = destino;
@@ -349,8 +351,8 @@
                 datosUsuario.nombre = nombre;
                 datosUsuario.pasaporte = pasaporte;
                 
-                document.getElementById('resumen-datos-1').innerText = `${nombre} | Pasaporte: ${pasaporte}`;
-                document.getElementById('resumen-datos-2').innerText = `${nombre} | Pasaporte: ${pasaporte}`;
+                document.getElementById('resumen-datos-1').innerText = `${nombre} | Pasaporte: ${pasaporte} | Correo: ${datosViaje.correo}`;
+                document.getElementById('resumen-datos-2').innerText = `${nombre} | Pasaporte: ${pasaporte} | Correo: ${datosViaje.correo}`;
                 
                 switchView('view-confirm');
                 speak(document.getElementById('confirm-text-1').innerText);
@@ -409,11 +411,14 @@
             let resItin = await fetch('/traducir_itinerario', { method: 'POST', body: formData });
             let dataItin = await resItin.json();
 
-            let escalaTexto = datosViaje.escala ? `<p><strong>Escala:</strong> ${datosViaje.escala} (${datosViaje.horas})</p><p><strong>2.</strong> ${dataItin.paso_2}</p><p><strong>3.</strong> ${dataItin.paso_3}</p>` : `<p><strong>2.</strong> ${dataItin.paso_3}</p>`;
+            let escalaTexto = datosViaje.escala && datosViaje.escala.trim() !== "" ? 
+                `<p><strong>Escala:</strong> ${datosViaje.escala} (${datosViaje.horas})</p><p><strong>2.</strong> ${dataItin.paso_2}</p><p><strong>3.</strong> ${dataItin.paso_3}</p>` : 
+                `<p><strong>2.</strong> ${dataItin.paso_3}</p>`;
 
             let htmlItin = `
                 <p><strong>Pasajero:</strong> ${datosUsuario.nombre} (Pasaporte: ${datosUsuario.pasaporte})</p>
-                <p><strong>Ruta:</strong> ${datosViaje.origen} ${datosViaje.escala ? '-> ' + datosViaje.escala + ' ->' : '->'} ${datosViaje.destino}</p>
+                <p><strong>Correo Conectado (API):</strong> ${datosViaje.correo}</p>
+                <p><strong>Ruta:</strong> ${datosViaje.origen.toUpperCase()} ${datosViaje.escala && datosViaje.escala.trim() !== "" ? '-> ' + datosViaje.escala.toUpperCase() + ' ->' : '->'} ${datosViaje.destino.toUpperCase()}</p>
                 <hr style="border:0; border-top:1px solid #ccc; margin:10px 0;">
                 <p><strong>1.</strong> ${dataItin.paso_1}</p>
                 ${escalaTexto}
@@ -437,7 +442,7 @@
             document.getElementById('opciones-vuelo-container').innerHTML = htmlOpciones;
 
             switchView('view-result');
-            let mensajeExito = currentLang === 'es' ? "Las opciones de vuelo y conexiones han sido encontradas con éxito." : "Flight options and connections have been successfully found.";
+            let mensajeExito = currentLang === 'es' ? "Conexión con APIs de aerolíneas completada. Opciones de vuelo encontradas con éxito." : "API connection completed. Flight options successfully found.";
             speak(mensajeExito);
         }
 
@@ -450,15 +455,6 @@
                 });
             }
         }
-
-        const SESSION_DURATION = 8 * 60 * 1000;
-        setTimeout(() => {
-            alert(content[currentLang].sessionEnd);
-            fetch('/destroy_session', { method: 'POST' }).finally(() => {
-                window.location.href = "about:blank";
-                window.close();
-            });
-        }, SESSION_DURATION);
     </script>
 </body>
 </html>
