@@ -187,20 +187,23 @@ HTML_INDEX = """<!DOCTYPE html>
             <p id="load-sub" style="font-size: 13px; color: #888;">Relájese por 30 segundos mientras acomodamos tu mapa de viaje limpio.</p>
         </div>
 
-        <!-- NUEVA VISTA 4: EL BOTÓN DE LANZAMIENTO ANTIDETECCIÓN PARA EL USUARIO -->
+        <!-- VISTA 4: BOTÓN MANUAL EXCLUSIVO PARA CONECTAR CON GOOGLE FLY -->
         <div id="view-lanzamiento" class="hidden">
             <h2 style="color: #004080;">¡Tu Viaje Seguro está Listo!</h2>
             
             <div id="itinerario-box" style="background: #f8f9fa; border: 1px solid #ccc; padding: 15px; border-radius: 8px; font-size: 14px; line-height: 1.5; margin: 15px 0; text-align: left; border-left: 5px solid #28a745;">
-                <!-- Aquí se inyecta dinámicamente el resumen del itinerario -->
+                <!-- Resumen dinámico del itinerario -->
             </div>
             
             <div style="font-size: 16px; font-weight: bold; color: #004080; margin: 15px 0;">
                 Precio Estimado: <span id="precio-box" style="color: #28a745;">Verificando...</span>
             </div>
 
-            <p style="font-size: 15px; color: #444; line-height: 1.5; margin: 20px 0;">Hemos verificado y preparado todo tu itinerario libre de trampas. Para abrir de forma permitida la ventana oficial de Google Flights y activar tu consola flotante de apoyo 24/7 sin bloqueos del navegador, por favor presiona el botón verde de abajo:</p>
-            <button class="btn-success" id="btn-abrir-flotante" onclick="abrirVentanaFlotanteOficial()">🚀 ABRIR MI VENTANA DE VUELOS</button>
+            <p style="font-size: 15px; color: #444; line-height: 1.5; margin: 20px 0;">Para conectar manualmente con la plataforma oficial y consultar tus vuelos, presiona el siguiente botón:</p>
+            
+            <!-- BOTÓN MANUAL EXCLUSIVO CON EL URL DE GOOGLE FLY -->
+            <button class="btn-success" id="btn-conectar-google-fly" onclick="conectarGoogleFlyManual()">✈️ CONECTAR CON GOOGLE FLY</button>
+            
             <p style="font-size: 12px; color: #777; margin-top: 15px;" id="autopropaganda-nino">Recomendación orientativa sujeta a revisión de los estándares operativos aplicables.</p>
         </div>
     </div>
@@ -231,7 +234,7 @@ HTML_INDEX = """<!DOCTYPE html>
 let currentLang = 'es';
 let micActive = true;
 let recognition = null;
-let urlGoogleFlightsGlobal = ""; // Guarda el enlace limpio para el clic físico
+let urlGoogleFlightsGlobal = ""; // Almacena el URL oficial de Google Flights
 
 const translations = {
     es: {
@@ -271,6 +274,7 @@ const translations = {
         loadSub: "Relax for 30 seconds while we organize your clean route map."
     }
 };
+
 function setLanguage(lang) {
     currentLang = lang;
     let t = translations[lang];
@@ -443,7 +447,6 @@ async function procesarAsesoria() {
     errBox.classList.add('hidden');
     switchView('view-loading');
 
-    // Simular los 30 segundos de respiro del círculo antes de pasar al lanzamiento
     setTimeout(async () => {
         try {
             let formData = new URLSearchParams();
@@ -464,19 +467,17 @@ async function procesarAsesoria() {
                 document.getElementById('itinerario-box').innerHTML = `<p>${data.itinerario_masticado}</p>`; 
                 document.getElementById('precio-box').innerText = data.precio_real || "Verificado conforme a normativa"; 
                 
-                // Guardar la URL devuelta por FastAPI de forma global para el clic físico
+                // Guardar la URL oficial devuelta por el servidor
                 urlGoogleFlightsGlobal = data.url_directa;
                 
-                // Cambiar a la vista intermedia del botón de lanzamiento físico permitido
+                // Mostrar la vista con el botón manual de conexión
                 switchView('view-lanzamiento');
                 
-                // Configurar el chat con la explicación adaptada
                 agregarMensajeChat("Copiloto: " + data.itinerario_masticado);
                 
-                // Locución humana nativa de aviso
                 speak(currentLang === 'es' 
-                    ? "Tu itinerario está listo. Presiona el botón verde en pantalla para desplegar de forma segura tus vuelos en vivo." 
-                    : "Your itinerary is ready. Press the green button on the screen to safely display your live flights.");
+                    ? "Itinerario verificado. Presiona el botón verde cuando desees conectar con Google Fly." 
+                    : "Itinerary verified. Press the green button when you want to connect with Google Fly.");
             } else { 
                 switchView('view-form');
                 alert("Error en el servidor central de control."); 
@@ -486,22 +487,22 @@ async function procesarAsesoria() {
             alert("Error de conexión de red."); 
         } 
         document.getElementById('autopropaganda-nino').innerText = currentLang === 'es' ? "Recomendación orientativa sujeta a revisión de los estándares operativos aplicables." : "Guidance recommendation subject to review of applicable operational standards."; 
-    }, 4000); // Demora simulada corta y fluida o se puede ajustar a requerimiento
+    }, 4000);
 } 
 
-function abrirVentanaFlotanteOficial() {
-    if (!urlGoogleFlightsGlobal) return;
+// FUNCIÓN PARA EL CLIC MANUAL DEL CLIENTE CON EL URL DE GOOGLE FLY
+function conectarGoogleFlyManual() {
+    if (!urlGoogleFlightsGlobal) {
+        urlGoogleFlightsGlobal = "https://www.google.com/travel/flights";
+    }
     
-    // Cambiar de inmediato a la Consola Guardián con chat y micrófono activo
+    // Cambiar a la consola flotante de acompañamiento
     switchView('view-split');
     
-    // EJECUCIÓN FÍSICA AUTORIZADA: Abre Google Fly en una ventana flotante limpia encima
-    let ancho = 950; let alto = 780;
-    let izquierdo = (window.screen.width / 2) - (ancho / 2);
-    let superior = (window.screen.height / 2) - (alto / 2);
-    window.open(urlGoogleFlightsGlobal, 'GoogleFlyFlotante', `width=${ancho},height=${alto},top=${superior},left=${izquierdo},resizable=yes,scrollbars=yes`);
+    // Abrir de forma controlada y manual el URL de Google Flights en una nueva pestaña o ventana
+    window.open(urlGoogleFlightsGlobal, '_blank');
     
-    // Arrancar el motor de escucha continua
+    // Iniciar asistencia de voz y chat activo
     iniciarReconocimientoVoz();
 }
 
@@ -540,7 +541,7 @@ async def traducir_itinerario(request: Request):
                 f"• Origen: {origin_iata} | Destino: {destination_iata}<br>" 
                 f"• {'Conexión en ' + escala.upper() + ' (' + (horas_escala if horas_escala else 'Tiempo estándar') + ')' if (escala and escala != '') else 'Vuelo directo'}<br>" 
                 f"• Ruta verificada para tu total protección y certeza.<br>" 
-                f"Cumplimiento verificado. Se ha abierto la ventana oficial flotante de Google Flights para tu compra directa y segura." 
+                f"Presiona el botón de conexión cuando desees abrir Google Fly." 
             ) 
         else: 
             texto_masticado = ( 
@@ -548,7 +549,7 @@ async def traducir_itinerario(request: Request):
                 f"• Origin: {origin_iata} | Destination: {destination_iata}<br>" 
                 f"• {'Connection in ' + escala.upper() + ' (' + (horas_escala if horas_escala else 'Standard time') + ')' if (escala and escala != '') else 'Direct flight'}<br>" 
                 f"• Route successfully verified for your complete protection.<br>" 
-                f"Compliance verified. The official floating Google Flights window has been opened for your direct and secure purchase." 
+                f"Press the connection button whenever you wish to open Google Fly." 
             ) 
             
         url_google_flights = f"https://www.google.com/travel/flights?q=flights%20from%20{origin_iata}%20to%20{destination_iata}" 
