@@ -50,20 +50,19 @@
             border-radius: 5px;
             border: 1px solid #ccc;
         }
-        /* Círculo Respiratorio */
+        /* Círculo Respiratorio Pulmonar (Ritmo humano de 25 años: 4s inhala, 4s exhala de forma continua) */
         #breathing-circle {
-            width: 150px;
-            height: 150px;
+            width: 140px;
+            height: 140px;
             background-color: #a8dadc;
             border-radius: 50%;
             margin: 30px auto;
-            transition: transform 4s ease-in-out;
+            animation: respirarHumano 8s infinite ease-in-out;
         }
-        .scale-up {
-            transform: scale(1.4);
-        }
-        .scale-down {
-            transform: scale(1.0);
+        @keyframes respirarHumano {
+            0% { transform: scale(1.0); background-color: #a8dadc; }
+            50% { transform: scale(1.35); background-color: #457b9d; }
+            100% { transform: scale(1.0); background-color: #a8dadc; }
         }
         .opcion-card {
             background: #eef2f5;
@@ -85,59 +84,59 @@
         <!-- VISTA 1: INICIO -->
         <div id="view-home">
             <h1 id="title">AL CIELO</h1>
-            <p id="subtitle">Sistema Híbrido de Asistencia al Viajero</p>
+            <p id="subtitle">Tu casita amigable de asistencia para viajar</p>
             <div style="margin-top: 30px;">
                 <button id="btn-entrar" onclick="handleEnter()">Entrar</button>
                 <button id="btn-cerrar" onclick="handleClose()">Cerrar</button>
             </div>
         </div>
 
-        <!-- VISTA 2: DESPERTAR DE RENDER (40-50s) -->
+        <!-- VISTA 2: DESPERTAR DEL SERVIDOR -->
         <div id="view-render" class="hidden">
-            <h2 id="render-title">Conectando con el Sistema...</h2>
+            <h2 id="render-heading-title">Un momentito por favor...</h2>
             <p id="render-phrase" style="font-size: 18px; margin: 30px 0; font-style: italic;"></p>
         </div>
 
-        <!-- VISTA 3: FORMULARIO Y VALIDACIÓN -->
+        <!-- VISTA 3: FORMULARIO -->
         <div id="view-form" class="hidden">
-            <h2 id="form-heading">Datos de Asistencia</h2>
-            <p id="form-instruction">Escribe tus datos exactamente como aparecen en tu pasaporte.</p>
-            <input type="text" id="input-nombre" placeholder="Nombre completo"><br>
-            <input type="text" id="input-pasaporte" placeholder="Número de Pasaporte"><br>
+            <h2 id="form-heading">Tus Datos Personales</h2>
+            <p id="form-instruction">Escribe tu nombre y número de pasaporte tal como aparecen en tu documento físico.</p>
+            <input type="text" id="input-nombre" placeholder="Tu nombre completo"><br>
+            <input type="text" id="input-pasaporte" placeholder="Número de tu pasaporte"><br>
             <button id="btn-validar" onclick="validarDatos()">Continuar</button>
             <p id="error-box" style="color: red; font-weight: bold; margin-top: 15px;"></p>
         </div>
 
-        <!-- VISTA 4: CÍRCULO RESPIRATORIO (60s) -->
+        <!-- VISTA 4: CÍRCULO RESPIRATORIO (1 MINUTO CONTINUO) -->
         <div id="view-breath" class="hidden">
-            <h2 id="breath-title">Santuario de Relajación</h2>
+            <h2 id="breath-heading-title">Momento de Calma</h2>
             <div id="breathing-circle"></div>
-            <p id="breath-phrase" style="font-size: 18px; font-weight: bold;"></p>
+            <p id="breath-phrase" style="font-size: 18px; font-weight: bold; min-height: 50px;"></p>
         </div>
 
-        <!-- VISTA 5: RETÉN DE LA VERDAD Y DOBLE CONFIRMACIÓN -->
+        <!-- VISTA 5: RETÉN DE LA VERDAD -->
         <div id="view-confirm" class="hidden">
-            <h2 id="confirm-title">Retén de la Verdad</h2>
-            <p id="confirm-text-1">¿Escribiste tu nombre exactamente igual a como aparece en tu pasaporte físico? Míralo bien letra por letra.</p>
+            <h2 id="confirm-title-1">El Retén del Cariño</h2>
+            <p id="confirm-text-1">¿Escribiste tu nombre exactamente igual a tu pasaporte? Revísalo con calma, letra por letra.</p>
             <p id="resumen-datos" style="font-size: 20px; font-weight: bold; color: #004080;"></p>
-            <button id="btn-conf-1" onclick="pasoConfirmacion2()">SÍ</button>
+            <button id="btn-conf-1" onclick="pasoConfirmacion2()">¡Sí, está perfecto!</button>
         </div>
 
         <div id="view-confirm-2" class="hidden">
-            <h2>Segunda Confirmación Legal</h2>
-            <p id="confirm-text-2">Confirma por segunda vez. Si hay un error aquí, la aerolínea no te dejará subir al avión y perderás tu viaje. ¿Está todo perfecto?</p>
-            <button id="btn-conf-2" onclick="ejecutarEscudoEvidencia()">SÍ, ESTÁ PERFECTO</button>
+            <h2 id="confirm-title-2">Segunda Revisión de Amor</h2>
+            <p id="confirm-text-2">Un pequeño error aquí podría hacer que la aerolínea no te deje abordar. ¿Me confirmas que todo está lindísimo y correcto?</p>
+            <button id="btn-conf-2" onclick="ejecutarEscudoEvidencia()">Sí, todo está impecable</button>
         </div>
 
-        <!-- VISTA 6: TRADUCCIÓN Y OPCIONES DE VUELO + PDF LOCAL -->
+        <!-- VISTA 6: RESULTADOS Y OPCIONES -->
         <div id="view-result" class="hidden">
-            <h2 id="result-title">Tu Itinerario y Opciones de Vuelo</h2>
+            <h2 id="result-title">Tu Viaje Explicado Paso a Paso</h2>
             <div id="itinerary-output" style="text-align: left; background: #eef2f5; padding: 15px; border-radius: 5px; margin-bottom: 20px;"></div>
             
-            <h3 id="opciones-heading" style="color: #004080; margin-top: 20px;">Opciones de Viaje para Ti</h3>
+            <h3 id="opciones-heading" style="color: #004080; margin-top: 20px;">Las Mejores Opciones de Vuelo Para Ti</h3>
             <div id="opciones-vuelo-container" style="margin-bottom: 20px;"></div>
 
-            <button id="btn-print" onclick="window.print()">Imprimir / Guardar PDF</button>
+            <button id="btn-print" onclick="window.print()">Imprimir o Guardar en PDF</button>
         </div>
     </div>
 
@@ -148,29 +147,80 @@
         const content = {
             es: {
                 title: "AL CIELO",
-                subtitle: "Sistema Híbrido de Asistencia al Viajero",
+                subtitle: "Tu casita amigable de asistencia para viajar",
                 enter: "Entrar",
                 close: "Cerrar",
-                alertClose: "¿Seguro que deseas cerrar tu sesión ahora?",
-                sessionEnd: "Tu sesión de seguridad ha terminado. Los datos han sido borrados."
+                alertClose: "¿Seguro que quieres cerrar tu casita de viaje ahora?",
+                sessionEnd: "Tu tiempo de seguridad ha terminado. Por tu privacidad, hemos borrado todo.",
+                renderTitle: "Un momentito por favor...",
+                formHeading: "Tus Datos Personales",
+                formInstruction: "Escribe tu nombre y número de pasaporte tal como aparecen en tu documento físico.",
+                inputNombre: "Tu nombre completo",
+                inputPasaporte: "Número de tu pasaporte",
+                btnValidar: "Continuar",
+                breathHeading: "Momento de Calma",
+                confirmTitle1: "El Retén del Cariño",
+                confirmText1: "¿Escribiste tu nombre exactamente igual a tu pasaporte? Revísalo con calma, letra por letra.",
+                btnConf1: "¡Sí, está perfecto!",
+                confirmTitle2: "Segunda Revisión de Amor",
+                confirmText2: "Un pequeño error aquí podría hacer que la aerolínea no te deje abordar. ¿Me confirmas que todo está lindísimo y correcto?",
+                btnConf2: "Sí, todo está impecable",
+                resultTitle: "Tu Viaje Explicado Paso a Paso",
+                opcionesHeading: "Las Mejores Opciones de Vuelo Para Ti",
+                btnPrint: "Imprimir o Guardar en PDF",
+                avisoEvidencia: "Por tu seguridad, hemos guardado una copia de cariño de tus datos en la galería de fotos de tu teléfono."
             },
             en: {
-                title: "AL CIELO",
-                subtitle: "Hybrid Traveler Assistance System",
+                title: "TO THE SKY",
+                subtitle: "Your friendly travel assistance home",
                 enter: "Enter",
                 close: "Close",
-                alertClose: "Are you sure you want to close your session now?",
-                sessionEnd: "Your security session has ended. Data has been cleared."
+                alertClose: "Are you sure you want to close your travel home now?",
+                sessionEnd: "Your safety time has ended. For your privacy, we have cleared everything.",
+                renderTitle: "Just a tiny moment please...",
+                formHeading: "Your Personal Details",
+                formInstruction: "Write your name and passport number exactly as they appear on your physical document.",
+                inputNombre: "Your full name",
+                inputPasaporte: "Your passport number",
+                btnValidar: "Continue",
+                breathHeading: "Calm Moment",
+                confirmTitle1: "The Love Checkpoint",
+                confirmText1: "Did you write your name exactly like your passport? Check it calmly, letter by letter.",
+                btnConf1: "Yes, it's perfect!",
+                confirmTitle2: "Second Loving Review",
+                confirmText2: "A small mistake here could make the airline not let you board. Do you confirm everything is neat and correct?",
+                btnConf2: "Yes, everything is spotless",
+                resultTitle: "Your Journey Explained Step by Step",
+                opcionesHeading: "The Best Flight Options For You",
+                btnPrint: "Print or Save as PDF",
+                avisoEvidencia: "For your safety, we have saved a loving copy of your details in your phone's photo gallery."
             }
         };
 
         function setLanguage(lang) {
             currentLang = lang;
             document.documentElement.lang = lang;
-            document.getElementById('title').innerText = content[lang].title;
-            document.getElementById('subtitle').innerText = content[lang].subtitle;
-            document.getElementById('btn-entrar').innerText = content[lang].enter;
-            document.getElementById('btn-cerrar').innerText = content[lang].close;
+            let c = content[lang];
+            document.getElementById('title').innerText = c.title;
+            document.getElementById('subtitle').innerText = c.subtitle;
+            document.getElementById('btn-entrar').innerText = c.enter;
+            document.getElementById('btn-cerrar').innerText = c.close;
+            document.getElementById('render-heading-title').innerText = c.renderTitle;
+            document.getElementById('form-heading').innerText = c.formHeading;
+            document.getElementById('form-instruction').innerText = c.formInstruction;
+            document.getElementById('input-nombre').placeholder = c.inputNombre;
+            document.getElementById('input-pasaporte').placeholder = c.inputPasaporte;
+            document.getElementById('btn-validar').innerText = c.btnValidar;
+            document.getElementById('breath-heading-title').innerText = c.breathHeading;
+            document.getElementById('confirm-title-1').innerText = c.confirmTitle1;
+            document.getElementById('confirm-text-1').innerText = c.confirmText1;
+            document.getElementById('btn-conf-1').innerText = c.btnConf1;
+            document.getElementById('confirm-title-2').innerText = c.confirmTitle2;
+            document.getElementById('confirm-text-2').innerText = c.confirmText2;
+            document.getElementById('btn-conf-2').innerText = c.btnConf2;
+            document.getElementById('result-title').innerText = c.resultTitle;
+            document.getElementById('opciones-heading').innerText = c.opcionesHeading;
+            document.getElementById('btn-print').innerText = c.btnPrint;
         }
 
         function speak(text) {
@@ -189,7 +239,6 @@
             document.getElementById(viewId).classList.remove('hidden');
         }
 
-        // FASE 1: Despertar de Render (45 segundos de frases rotativas)
         async function handleEnter() {
             speak(content[currentLang].enter);
             switchView('view-render');
@@ -199,8 +248,6 @@
                 const data = await res.json();
                 let frases = data.frases;
                 let index = 0;
-
-                document.getElementById('render-title').innerText = currentLang === 'es' ? "Preparando Sistema..." : "Preparing System...";
                 
                 let fraseActual = frases[index % frases.length];
                 document.getElementById('render-phrase').innerText = fraseActual;
@@ -224,7 +271,6 @@
             }
         }
 
-        // FASE 2: Validación de Datos Estilo Niño de 8 Años
         async function validarDatos() {
             let nombre = document.getElementById('input-nombre').value;
             let pasaporte = document.getElementById('input-pasaporte').value;
@@ -245,7 +291,6 @@
                 datosUsuario.nombre = nombre;
                 datosUsuario.pasaporte = pasaporte;
                 
-                // Pasar al Retén de la Verdad
                 document.getElementById('resumen-datos').innerText = `${nombre} - ${pasaporte}`;
                 switchView('view-confirm');
                 speak(document.getElementById('confirm-text-1').innerText);
@@ -257,12 +302,8 @@
             speak(document.getElementById('confirm-text-2').innerText);
         }
 
-        // FASE 3: Escudo de Evidencia Local y Círculo Respiratorio (60s)
         async function ejecutarEscudoEvidencia() {
-            let aviso = currentLang === 'es' ? 
-                "Por tu seguridad, hemos guardado una copia exacta de tus datos en la galería de fotos de tu teléfono." :
-                "For your security, we have saved an exact copy of your data in your phone's photo gallery.";
-            
+            let aviso = content[currentLang].avisoEvidencia;
             alert(aviso);
             speak(aviso);
 
@@ -275,34 +316,36 @@
                 let res = await fetch(`/frases_respiracion?lang=${currentLang}`);
                 let data = await res.json();
                 let frases = data.frases;
-                let circle = document.getElementById('breathing-circle');
                 let phraseBox = document.getElementById('breath-phrase');
 
                 let index = 0;
-                let runBreath = () => {
+                
+                // Mostrar primera frase y hablarla
+                phraseBox.innerText = frases[index];
+                speak(frases[index]);
+
+                // Rotar frases cada 20 segundos durante el minuto completo (60s)
+                let breathInterval = setInterval(() => {
+                    index++;
                     if(index < frases.length) {
                         phraseBox.innerText = frases[index];
                         speak(frases[index]);
-
-                        circle.classList.add('scale-up');
-                        setTimeout(() => {
-                            circle.classList.remove('scale-up');
-                            circle.classList.add('scale-down');
-                        }, 4000);
-
-                        index++;
-                        setTimeout(runBreath, 20000);
-                    } else {
-                        cargarItinerarioYOpciones();
                     }
-                };
-                runBreath();
+                }, 20000);
+
+                // Al cumplirse los 60 segundos exactos, pasar al resultado
+                setTimeout(() => {
+                    clearInterval(breathInterval);
+                    cargarItinerarioYOpciones();
+                }, 60000);
+
             } catch(e) {
-                cargarItinerarioYOpciones();
+                setTimeout(() => {
+                    cargarItinerarioYOpciones();
+                }, 60000);
             }
         }
 
-        // FASE 4: Traducción de Itinerario y Despliegue de las 4 Opciones de Vuelo
         async function cargarItinerarioYOpciones() {
             let formData = new URLSearchParams();
             formData.append('origen', 'Miami');
@@ -321,23 +364,24 @@
             `;
             document.getElementById('itinerary-output').innerHTML = htmlItin;
 
-            // Obtener las 4 opciones de vuelo estructuradas como niño de 8 años
             let resOpciones = await fetch(`/opciones_vuelo?lang=${currentLang}`);
             let dataOpciones = await resOpciones.json();
 
             let htmlOpciones = "";
-            dataOpciones.opciones.forEach(op => {
-                htmlOpciones += `
-                    <div class="opcion-card">
-                        <strong>${op.titulo}</strong>
-                        <p style="margin: 5px 0 0 0; font-size: 14px;">${op.descripcion}</p>
-                    </div>
-                `;
-            });
+            if (dataOpciones && dataOpciones.opciones) {
+                dataOpciones.opciones.forEach(op => {
+                    htmlOpciones += `
+                        <div class="opcion-card">
+                            <strong>${op.titulo}</strong>
+                            <p style="margin: 5px 0 0 0; font-size: 14px;">${op.descripcion}</p>
+                        </div>
+                    `;
+                });
+            }
             document.getElementById('opciones-vuelo-container').innerHTML = htmlOpciones;
 
             switchView('view-result');
-            speak(currentLang === 'es' ? "Tu itinerario y opciones han sido cargados con éxito." : "Your itinerary and options have been successfully loaded.");
+            speak(currentLang === 'es' ? "Tu viaje y tus opciones ya están listos en pantalla." : "Your trip and options are now ready on screen.");
         }
 
         function handleClose() {
@@ -350,7 +394,6 @@
             }
         }
 
-        // Ciclo de vida estricto: 8 minutos
         const SESSION_DURATION = 8 * 60 * 1000;
         setTimeout(() => {
             alert(content[currentLang].sessionEnd);
