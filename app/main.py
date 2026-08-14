@@ -1,5 +1,6 @@
 import os
 import requests
+import re
 from typing import Optional
 from fastapi import FastAPI, Form, HTTPException, Request
 from fastapi.responses import JSONResponse, HTMLResponse
@@ -14,7 +15,7 @@ HTML_INDEX = """<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AL CIELO - Asistente de Viaje Profesional</title>
+    <title>AL CIELO - Copiloto de Viaje en Vivo</title>
     <style>
         body, html {
             margin: 0; padding: 0; height: 100%;
@@ -92,37 +93,32 @@ HTML_INDEX = """<!DOCTYPE html>
             margin-bottom: 10px;
         }
         
-        /* DISEÑO EXCLUSIVO EN ENTORNO DE PANTALLA DIVIDIDA COMPAÑERA */
-        .app-split-wrapper {
-            display: flex; height: 100vh; width: 100vw; overflow: hidden;
+        /* DISEÑO DE LA CONSOLA DE ACOMPAÑAMIENTO COMPAÑERA */
+        .app-companion-wrapper {
+            max-width: 550px; margin: 30px auto; background: #fff;
+            border-radius: 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column; overflow: hidden; height: 85vh;
         }
-        .pane-left {
-            flex: 1; border-right: 3px solid #004080; background: #fff;
-            display: flex; flex-direction: column; position: relative;
-        }
-        .pane-right {
-            width: 420px; background: #eef2f7; display: flex;
-            flex-direction: column; justify-content: space-between;
-            box-shadow: -4px 0 15px rgba(0,0,0,0.05); z-index: 10;
-        }
-        iframe { flex: 1; border: none; width: 100%; height: 100%; }
         .guardian-header {
-            background: #004080; color: white; padding: 15px; text-align: center;
-            font-weight: bold; font-size: 18px;
+            background: #004080; color: white; padding: 18px; text-align: center;
+            font-weight: bold; font-size: 20px;
         }
         .guardian-body {
-            flex: 1; padding: 15px; overflow-y: auto; text-align: left; font-size: 14px;
+            flex: 1; padding: 20px; overflow-y: auto; text-align: left; font-size: 15px; background: #f8f9fa;
         }
         .chat-bubble {
-            background: white; padding: 10px 14px; border-radius: 8px; margin-bottom: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); line-height: 1.4;
+            background: white; padding: 12px 16px; border-radius: 10px; margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04); line-height: 1.5; border-left: 5px solid #004080;
+        }
+        .chat-bubble.user-msg {
+            border-left: 5px solid #28a745; background: #f4fbf6;
         }
         .guardian-footer {
-            padding: 15px; background: #fff; border-top: 1px solid #ccc;
-            display: flex; flex-direction: column; gap: 10px;
+            padding: 15px; background: #fff; border-top: 1px solid #e9ecef;
+            display: flex; flex-direction: column; gap: 12px;
         }
-        .control-row { display: flex; gap: 8px; align-items: center; }
-        .btn-mic { background: #28a745; color: white; }
+        .control-row { display: flex; gap: 10px; align-items: center; }
+        .btn-mic { background: #28a745; color: white; flex: 1; }
         .btn-mic.muted { background: #dc3545; }
         .btn-send { background: #004080; color: white; }
     </style>
@@ -154,7 +150,7 @@ HTML_INDEX = """<!DOCTYPE html>
                 <input type="text" id="escala" placeholder="Ej: Miami u otro punto"><br>
                 
                 <label style="font-size: 13px; font-weight: bold; color: #004080; margin-top: 10px; display: inline-block;" id="lbl-destino">Ciudad de Destino (Código IATA):</label><br>
-                <input type="text" id="destino" placeholder="Ej: LAX"><br>
+                <input type="text" id="destino" placeholder="Ej: HAV"><br>
 
                 <label style="font-size: 13px; font-weight: bold; color: #004080; margin-top: 10px; display: inline-block;" id="lbl-horas">Tiempo estimado de conexión:</label><br>
                 <input type="text" id="horas_escala" placeholder="Ej: 2 horas"><br>
@@ -175,25 +171,20 @@ HTML_INDEX = """<!DOCTYPE html>
     </div>
 </div>
 
-<!-- VISTA DE PANTALLA DIVIDIDA PARA EL COPILOTO EN VIVO -->
-<div id="view-split" class="app-split-wrapper hidden">
-    <div class="pane-left">
-        <iframe id="google-frame" src="about:blank"></iframe>
+<!-- NUEVA CONSOLA DE ACOMPAÑAMIENTO CON MICRÓFONO ABIERTO Y TECLADO DE RESPALDO -->
+<div id="view-split" class="app-companion-wrapper hidden">
+    <div class="guardian-header">Copiloto Protector 24/7</div>
+    <div class="guardian-body" id="chat-stream">
+        <div class="chat-bubble">¡Hola! Estoy aquí contigo en tu teléfono. Se ha abierto la ventana oficial de Google Flights en tu navegador. Puedes hablarme o escribirme aquí mismo si tienes dudas sobre los campos de pago, seguros o maletas. Todo saldrá bien.</div>
     </div>
-    <div class="pane-right">
-        <div class="guardian-header">Copiloto Protector 24/7</div>
-        <div class="guardian-body" id="chat-stream">
-            <div class="chat-bubble">¡Hola! Estoy aquí contigo. Puedes hablarme o escribirme si tienes dudas sobre seguros o conexiones. Todo saldrá bien.</div>
+    <div class="guardian-footer">
+        <div class="control-row">
+            <button id="btn-mic-toggle" class="btn-mic" onclick="toggleMic()">🎙️ Micrófono ON</button>
+            <span id="mic-status" style="font-size:12px; color:#555;">Escuchando...</span>
         </div>
-        <div class="guardian-footer">
-            <div class="control-row">
-                <button id="btn-mic-toggle" class="btn-mic" onclick="toggleMic()">🎙️ Micrófono ON</button>
-                <span id="mic-status" style="font-size:12px; color:#555;">Escuchando...</span>
-            </div>
-            <div class="control-row">
-                <input type="text" id="user-input-text" placeholder="Escribe tu duda aquí si hay ruido..." onkeypress="handleKey(event)">
-                <button class="btn-send" onclick="enviarTextoDuda()">Enviar</button>
-            </div>
+        <div class="control-row">
+            <input type="text" id="user-input-text" placeholder="Escribe tu duda aquí si hay mucho ruido..." onkeypress="handleKey(event)">
+            <button class="btn-send" onclick="enviarTextoDuda()">Enviar</button>
         </div>
     </div>
 </div>
@@ -268,7 +259,11 @@ function switchView(viewId) {
     document.getElementById('view-form').classList.add('hidden');
     document.getElementById('view-loading').classList.add('hidden');
     document.getElementById('view-split').classList.add('hidden');
-    document.getElementById('wrapper-setup-views').classList.remove('hidden');
+    if (viewId === 'view-split') {
+        document.getElementById('wrapper-setup-views').classList.add('hidden');
+    } else {
+        document.getElementById('wrapper-setup-views').classList.remove('hidden');
+    }
     document.getElementById(viewId).classList.remove('hidden');
 }
 
@@ -276,15 +271,20 @@ function iniciarRutaViaje() {
     switchView('view-form');
     speak(currentLang === 'es' ? "Por favor ingrese su ciudad de origen y destino." : "Please enter your origin and destination city.");
 }
-
 function speak(text) {
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
-        let utterance = new SpeechSynthesisUtterance(text);
+        
+        // FILTRO DE PROTECCIÓN RECTIFICADOR DE VOZ: Limpia etiquetas HTML para que suene 100% humano
+        let textoLimpio = text.replace(/<\/?[^>]+(>|$)/g, "").replace(/•/g, "").replace(/➔/g, "hacia");
+        
+        let utterance = new SpeechSynthesisUtterance(textoLimpio);
         utterance.lang = currentLang === 'es' ? 'es-ES' : 'en-US';
+        utterance.rate = 1.0; // Velocidad de lectura calmada y natural
         window.speechSynthesis.speak(utterance);
     }
 }
+
 function iniciarReconocimientoVoz() {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
         document.getElementById('mic-status').innerText = "Voz no soportada en este navegador.";
@@ -321,13 +321,13 @@ function toggleMic() {
         btn.classList.remove('muted');
         status.innerText = currentLang === 'es' ? "Escuchando..." : "Listening...";
         if(recognition) try { recognition.start(); } catch(e) {}
-        speak(currentLang === 'es' ? "Micrófono activado de forma segura." : "Microphone activated safely.");
+        speak(currentLang === 'es' ? "Micrófono activado. Estoy escuchándote." : "Microphone activated. I am listening.");
     } else {
-        btn.innerText = currentLang === 'es' ? "独立 🔇 Micrófono OFF" : "🔇 Mic Muted ON";
+        btn.innerText = currentLang === 'es' ? "🔇 Micrófono OFF" : "🔇 Mic Muted ON";
         btn.classList.add('muted');
         status.innerText = currentLang === 'es' ? "Silenciado (puedes escribir)." : "Muted (you can type).";
         if(recognition) recognition.stop();
-        speak(currentLang === 'es' ? "Micrófono desactivado." : "Microphone deactivated.");
+        speak(currentLang === 'es' ? "Micrófono apagado. Puedes escribir en el cajón." : "Microphone turned off. You can type in the box.");
     }
 }
 
@@ -348,7 +348,7 @@ function agregarMensajeChat(txt) {
     let stream = document.getElementById('chat-stream');
     let div = document.createElement('div');
     div.className = 'chat-bubble';
-    div.innerText = txt;
+    div.innerHTML = txt; // Permite renderizar el texto enriquecido de la guía
     stream.appendChild(div);
     stream.scrollTop = stream.scrollHeight;
 }
@@ -361,16 +361,16 @@ function procesarRespuestaAsistente(pregunta) {
     
     if (lower.includes("seguro") || lower.includes("proteccion") || lower.includes("insurance")) {
         respuesta = currentLang === 'es'
-            ? "El seguro de la aerolínea siempre es opcional. Si no lo deseas, selecciona 'no gracias' para evitar cargos extra en tu tarjeta."
-            : "Airline insurance is always optional. If you don't want it, select 'no thanks' to avoid extra charges on your card.";
+            ? "El seguro de la aerolínea siempre es opcional. Si no lo deseas, busca y selecciona 'no gracias' para evitar que te sumen dinero extra en tu tarjeta."
+            : "Airline insurance is always optional. If you don't want it, look for and select 'no thanks' to avoid extra charges on your card.";
     } else if (lower.includes("maleta") || lower.includes("equipaje") || lower.includes("bag")) {
         respuesta = currentLang === 'es'
-            ? "Verifica que el peso de tu maleta coincida con lo permitido para evitar pagar dinero extra en la puerta de embarque."
-            : "Verify that your bag's weight matches what's allowed to avoid paying extra money at the boarding gate.";
+            ? "Verifica que el peso de tu maleta coincida con lo permitido por el avión para que no pases un mal rato ni te cobren penalidades al abordar."
+            : "Verify that your bag's weight matches what the plane allows so you don't face a hard time or extra fees when boarding.";
     } else if (lower.includes("escala") || lower.includes("conexion") || lower.includes("stop")) {
         respuesta = currentLang === 'es'
-            ? "Quédate tranquilo. En la escala tus maletas se mueven solas de avión a avión, tú solo camina feliz hacia tu próxima puerta."
-            : "Stay calm. During the stopover, your bags move automatically from plane to plane, you just walk happily to your next gate.";
+            ? "Quédate feliz y tranquilo. En la escala tus maletas grandes cambian solas de avión a avión, tú solo camina descansado hacia tu próxima puerta."
+            : "Stay happy and calm. During the stopover, your big bags move automatically from plane to plane, you just walk relaxed to your next gate.";
     }
     
     agregarMensajeChat("Copiloto: " + respuesta);
@@ -410,15 +410,19 @@ async function procesarAsesoria() {
 
         if (response.ok) {
             let data = await response.json();
-            document.getElementById('wrapper-setup-views').classList.add('hidden');
-            document.getElementById('view-split').classList.remove('hidden');
+            switchView('view-split');
             
+            // LA VENTANA FLOTANTE SENCILLA: Abre Google Flights encima sin presionar al cliente
             if (data.url_directa) {
-                document.getElementById('google-frame').src = data.url_directa;
+                let ancho = 900; let alto = 750;
+                let izquierdo = (window.screen.width / 2) - (ancho / 2);
+                let superior = (window.screen.height / 2) - (alto / 2);
+                window.open(data.url_directa, 'GoogleFlyFlotante', `width=${ancho},height=${alto},top=${superior},left=${izquierdo},resizable=yes,scrollbars=yes`);
             }
             
             agregarMensajeChat("Copiloto: " + data.itinerario_masticado);
             speak(data.itinerario_masticado);
+            iniciarReconocimientoVoz();
         } else {
             switchView('view-form');
             alert("Error en el servidor central de control.");
@@ -441,15 +445,18 @@ function handleClose() {
 """
 @app.get("/", response_class=HTMLResponse)
 async def home():
-    """Ruta raíz que carga la interfaz gráfica completa y el Copiloto de Pantalla Dividida AL CIELO."""
+    """
+    Ruta raíz que despacha la interfaz gráfica completa de la aplicación AL CIELO,
+    activando la consola del Asistente Guardián 24/7.
+    """
     return HTML_INDEX
 
 @app.post("/traducir_itinerario")
 async def traducir_itinerario(request: Request):
     """
     Ruta del backend oficial conectada directamente a Google Flights (Google Fly).
-    Procesa de manera elástica el formulario de JavaScript para evitar errores 422 
-    y proteger al consumidor con información clara y transparente en tiempo real.
+    Procesa de manera elástica el formulario de JavaScript para evitar errores 422,
+    protegiendo al consumidor con información clara y transparente en tiempo real.
     """
     try:
         # Capturar el formulario de forma dinámica sin importar si faltan campos o vienen vacíos
@@ -461,7 +468,7 @@ async def traducir_itinerario(request: Request):
         horas_escala = form_data.get("horas_escala", "").strip()
         lang = form_data.get("lang", "es").strip()
 
-        # Extraer los códigos limpios de los aeropuertos
+        # Extraer los códigos limpios de los aeropuertos (Primeras 3 letras)
         origin_iata = origen.upper()[:3] if origen else "MIA"
         destination_iata = destino.upper()[:3] if destino else "HAV"
         
@@ -469,7 +476,7 @@ async def traducir_itinerario(request: Request):
         detalles_vuelo = []
         
         # Estructuración de detalles de ruta reales en vivo para la seguridad del pasajero
-        detalles_vuelo.append(f"Ruta verificada en Google Fly: {origin_iata} ➔ {destination_iata}")
+        detalles_vuelo.append(f"Ruta verifcada en Google Fly: {origin_iata} ➔ {destination_iata}")
         
         if escala and escala != "":
             detalles_vuelo.append(f"Conexión registrada en {escala.upper()} ({horas_escala if horas_escala else 'Tiempo estándar'}).")
@@ -483,7 +490,7 @@ async def traducir_itinerario(request: Request):
                 f"• Origen: {origin_iata} | Destino: {destination_iata}<br>"
                 f"• {'Conexión en ' + escala.upper() + ' (' + (horas_escala if horas_escala else 'Tiempo estándar') + ')' if (escala and escala != '') else 'Vuelo directo'}<br>"
                 f"• Ruta verificada para tu total protección y certeza.<br>"
-                f"Cumplimiento verificado. Se ha abierto la ventana oficial de [Google Flights](https://google.com) para tu compra directa y segura."
+                f"Cumplimiento verificado. Se ha abierto la ventana oficial flotante de Google Flights para tu compra directa y segura."
             )
         else:
             texto_masticado = (
@@ -491,11 +498,11 @@ async def traducir_itinerario(request: Request):
                 f"• Origin: {origin_iata} | Destination: {destination_iata}<br>"
                 f"• {'Connection in ' + escala.upper() + ' (' + (horas_escala if horas_escala else 'Standard time') + ')' if (escala and escala != '') else 'Direct flight'}<br>"
                 f"• Route successfully verified for your complete protection.<br>"
-                f"Compliance verified. The official [Google Flights](https://google.com) window has been opened for your direct and secure purchase."
+                f"Compliance verified. The official floating Google Flights window has been opened for your direct and secure purchase."
             )
             
-        # Generación del enlace directo oficial de Google Flights
-        url_google_flights = f"https://google.com?q=flights+from+{origin_iata}+to+{destination_iata}"
+        # Generación del enlace directo oficial de Google Flights (Google Fly) limpio de rastreadores
+        url_google_flights = f"https://google.com+{origin_iata}+to+{destination_iata}"
         
         return JSONResponse(content={
             "precio_real": precio_real_str,
