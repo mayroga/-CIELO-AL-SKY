@@ -468,8 +468,20 @@ async function finalizarYMostrarItinerario() {
 
         if (response.ok) {
             let data = await response.json();
+            
+            // Inyectar el itinerario descriptivo en vivo
             itinerarioBox.innerHTML = `<p>${data.itinerario_masticado}</p>`;
+            
+            // Mostrar el precio consolidado e inalterado en vivo
             precioBox.innerText = data.precio_real || "Verificado conforme a normativa";
+            
+            // =========================================================================
+            // AJUSTE FINAL: APERTURA AUTOMÁTICA DE GOOGLE FLIGHTS (GOOGLE FLY)
+            // =========================================================================
+            if (data.url_directa) {
+                // Abre la pestaña de compra oficial en paralelo para el usuario
+                window.open(data.url_directa, '_blank');
+            }
         } else {
             itinerarioBox.innerText = currentLang === 'es' ? "No se pudo establecer conexión con el sistema de asesoría." : "Could not connect to the advisory system.";
         }
@@ -477,12 +489,13 @@ async function finalizarYMostrarItinerario() {
         itinerarioBox.innerText = currentLang === 'es' ? "Error de conexión con el servidor." : "Server connection error.";
     }
 
-    document.getElementById('autopropaganda-nino').innerText = currentLang === 'es'
-        ? "Recomendación orientativa sujeta a revisión de los estándares operativos aplicables."
+    // Módulo de Autopropaganda Amable y Explicativa para Niños
+    document.getElementById('autopropaganda-nino').innerText = currentLang === 'es' 
+        ? "Recomendación orientativa sujeta a revisión de los estándares operativos aplicables." 
         : "Guidance recommendation subject to review of applicable operational standards.";
-    
+        
     switchView('view-itinerario');
-    speak(currentLang === 'es' ? "Asesoría completada con éxito. Revise las directrices." : "Advisory successfully completed. Review the guidelines.");
+    speak(currentLang === 'es' ? "Asesoría completada con éxito. Revise las directrices y su ventana de Google Fly." : "Advisory successfully completed. Review the guidelines and your Google Fly window.");
 }
 
 function imprimirPDFLocal() {
@@ -490,9 +503,7 @@ function imprimirPDFLocal() {
 }
 
 function handleClose() {
-    let confirmMsg = currentLang === 'es'
-        ? "¿Desea finalizar la sesión? Los datos temporales se borrarán inmediatamente por seguridad."
-        : "Do you wish to end the session? Temporary data will be erased immediately for security.";
+    let confirmMsg = currentLang === 'es' ? "¿Desea finalizar la sesión? Los datos temporales se borrarán inmediatamente por seguridad." : "Do you wish to end the session? Temporary data will be erased immediately for security.";
     if (confirm(confirmMsg)) {
         window.location.href = "about:blank";
     }
