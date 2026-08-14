@@ -9,7 +9,7 @@ HTML_INDEX = """<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AL CIELO - Asistente de Viaje Profesional</title>
+    <title>AL CIELO - Asistencia de Viaje Profesional</title>
     <style>
         body, html {
             margin: 0; padding: 0; height: 100%;
@@ -17,20 +17,19 @@ HTML_INDEX = """<!DOCTYPE html>
             background-color: #f4f6f9; color: #333;
         }
         .main-container {
-            max-width: 650px;
-            margin: 40px auto;
-            padding: 30px;
+            max-width: 680px;
+            margin: 30px auto;
+            padding: 25px;
             background: #fff;
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            position: relative;
         }
-        h1 { color: #004080; margin-top: 10px; }
-        h2 { color: #004080; }
+        h1 { color: #004080; margin-top: 5px; font-size: 24px; }
+        h2 { color: #004080; font-size: 20px; }
         button {
-            padding: 12px 24px;
-            margin: 8px;
-            font-size: 16px;
+            padding: 12px 20px;
+            margin: 6px;
+            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
             border-radius: 6px;
@@ -43,31 +42,32 @@ HTML_INDEX = """<!DOCTYPE html>
         .btn-primary:hover { background-color: #002d5a; }
         .btn-danger { background-color: #dc3545; color: white; border: none; }
         .btn-danger:hover { background-color: #bd2130; }
-        .btn-success { background-color: #28a745; color: white; border: none; font-size: 18px; padding: 15px 30px; box-shadow: 0 4px 10px rgba(40,167,69,0.3); }
+        .btn-success { background-color: #28a745; color: white; border: none; font-size: 17px; padding: 14px 25px; box-shadow: 0 4px 10px rgba(40,167,69,0.3); }
         .btn-success:hover { background-color: #218838; }
         .hidden { display: none !important; }
-        input {
-            padding: 12px;
-            margin: 10px 0;
-            font-size: 16px;
-            width: 85%;
+        input, select {
+            padding: 10px 12px;
+            margin: 6px 0;
+            font-size: 15px;
+            width: 100%;
+            box-sizing: border-box;
             border-radius: 6px;
             border: 1px solid #ccc;
             outline: none;
         }
-        input:focus { border-color: #004080; box-shadow: 0 0 5px rgba(0,64,128,0.2); }
+        input:focus, select:focus { border-color: #004080; box-shadow: 0 0 5px rgba(0,64,128,0.2); }
         .error-message {
             color: #dc3545;
             font-weight: bold;
-            margin: 10px 0;
-            font-size: 15px;
+            margin: 8px 0;
+            font-size: 14px;
         }
         #breathing-circle {
-            width: 170px;
-            height: 170px;
+            width: 160px;
+            height: 160px;
             background-color: #a8dadc;
             border-radius: 50%;
-            margin: 20px auto;
+            margin: 15px auto;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -75,136 +75,223 @@ HTML_INDEX = """<!DOCTYPE html>
             padding: 15px;
             font-weight: bold;
             color: #fff;
-            font-size: 14px;
+            font-size: 13px;
             box-sizing: border-box;
-            animation: respirarHumanoRapido 8s infinite ease-in-out;
+            animation: respirarHumano 8s infinite ease-in-out;
         }
-        @keyframes respirarHumanoRapido {
+        @keyframes respirarHumano {
             0% { transform: scale(1.0); background-color: #a8dadc; }
-            50% { transform: scale(1.35); background-color: #457b9d; }
+            50% { transform: scale(1.3); background-color: #457b9d; }
             100% { transform: scale(1.0); background-color: #a8dadc; }
         }
         
-        /* CONSOLA DE ACOMPAÑAMIENTO */
-        .app-companion-wrapper {
-            max-width: 550px; margin: 30px auto; background: #fff;
-            border-radius: 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-            display: flex; flex-direction: column; overflow: hidden; height: 85vh;
+        /* LAYOUT DIVIDIDO PARA VISTA DE TRABAJO CON GOOGLE FLIGHTS */
+        .split-workspace {
+            display: flex;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+            background: #e9ecef;
         }
-        .guardian-header {
-            background: #004080; color: white; padding: 18px; text-align: center;
-            font-weight: bold; font-size: 20px;
+        .iframe-pane {
+            flex: 2;
+            height: 100%;
+            background: #fff;
+            border-right: 2px solid #ccc;
+            position: relative;
         }
-        .guardian-body {
-            flex: 1; padding: 20px; overflow-y: auto; text-align: left; font-size: 15px; background: #f8f9fa;
+        .iframe-pane iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .copilot-pane {
+            flex: 1;
+            min-width: 340px;
+            max-width: 420px;
+            height: 100%;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -4px 0 15px rgba(0,0,0,0.1);
+        }
+        .copilot-header {
+            background: #004080;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .copilot-body {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            font-size: 14px;
+            background: #f8f9fa;
         }
         .chat-bubble {
-            background: white; padding: 12px 16px; border-radius: 10px; margin-bottom: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04); line-height: 1.5; border-left: 5px solid #004080;
+            background: white;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+            line-height: 1.4;
+            border-left: 4px solid #004080;
         }
-        .guardian-footer {
-            padding: 15px; background: #fff; border-top: 1px solid #e9ecef;
-            display: flex; flex-direction: column; gap: 12px;
+        .copilot-footer {
+            padding: 12px;
+            background: #fff;
+            border-top: 1px solid #e9ecef;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
-        .control-row { display: flex; gap: 10px; align-items: center; }
-        .btn-mic { background: #28a745; color: white; flex: 1; }
+        .control-row { display: flex; gap: 8px; align-items: center; }
+        .btn-mic { background: #28a745; color: white; flex: 1; padding: 10px; font-size: 14px; }
         .btn-mic.muted { background: #dc3545; }
-        .btn-send { background: #004080; color: white; }
     </style>
 </head>
 <body>
+
+<!-- CONTENEDOR PRINCIPAL DE CONFIGURACIÓN Y LEGAL -->
 <div id="wrapper-setup-views">
     <div class="main-container">
-        <div id="language-controls">
-            <button onclick="setLanguage('es')">Español</button>
-            <button onclick="setLanguage('en')">English</button>
+        <div id="language-controls" style="text-align: right; margin-bottom: 10px;">
+            <button onclick="setLanguage('es')" style="padding: 6px 12px; font-size: 13px;">Español</button>
+            <button onclick="setLanguage('en')" style="padding: 6px 12px; font-size: 13px;">English</button>
         </div>
 
-        <!-- VISTA 1: MURO LEGAL -->
+        <!-- VISTA 1: ACUERDO LEGAL OBLIGATORIO MAY ROGA LLC -->
         <div id="view-home">
             <h1 id="title">AL CIELO</h1>
-            <p id="subtitle" style="font-size: 15px; line-height: 1.6; color: #444; margin: 15px 0; font-weight: bold;">
-                Mecanismo Tecnológico Privado de Asistencia y Acompañamiento al Viajero.
+            <p id="subtitle" style="font-size: 14px; line-height: 1.5; color: #444; margin: 12px 0; font-weight: bold;">
+                Servicio Profesional Privado de Orientación, Acompañamiento y Blindaje contra Errores de Viaje.
             </p>
             
-            <div style="text-align: left; background: #f8f9fa; border: 1px solid #ccc; padding: 15px; border-radius: 8px; max-height: 180px; overflow-y: auto; font-size: 13px; line-height: 1.5; margin: 20px 0; border-left: 5px solid #004080;">
-                <p><strong>CONTRATO DE MANDATO TÉCNICO Y DECLARACIÓN DE DERECHOS:</strong></p>
-                <p>Al presionar 'Acepto y Entrar', usted manifiesta, declara y firma voluntariamente lo siguiente:</p>
-                <p>1. Solicito y autorizo de forma expresa a esta aplicación para actuar como mi asistente técnico personal, copiloto informático y guía de acompañamiento en mi pantalla durante mi proceso de consulta en la plataforma pública de Google Flights.</p>
-                <p>2. Manifiesto que el uso de esta herramienta responde a mi derecho legítimo de recibir asistencia contra el agobio, el estrés y el cansancio mental derivados de la gestión de viajes.</p>
-                <p>3. Comprendo que esta aplicación es un agente informático pasivo y volátil: no almacena mis datos personales ni procesa mis pagos. La decisión final de compra se realiza bajo mi control directo en la ventana oficial externa.</p>
+            <div style="text-align: left; background: #f8f9fa; border: 1px solid #ccc; padding: 14px; border-radius: 8px; max-height: 160px; overflow-y: auto; font-size: 12px; line-height: 1.4; margin: 15px 0; border-left: 5px solid #004080;">
+                <p><strong>ACUERDO DE MANDATO Y PROTECCIÓN PERSONAL (MAY ROGA LLC):</strong></p>
+                <p>Al presionar 'Acepto y Firmar Acuerdo', usted manifiesta de forma libre y voluntaria que:</p>
+                <p>1. Solicita esta aplicación exclusivamente como su herramienta de ayuda personal para guiarle paso a paso, disipar dudas técnicas y protegerle contra confusiones o pérdidas de dinero al gestionar vuelos.</p>
+                <p>2. Comprende que la aplicación actúa como un asesor consultivo de apoyo, brindándole instrucciones claras y sencillas para que usted tome el control final en las plataformas oficiales.</p>
+                <p>3. Exime a May Roga LLC de responsabilidades ajenas a la orientación brindada, comprometiéndose a usar este sistema estrictamente para su asistencia personal.</p>
             </div>
 
-            <div style="margin: 15px 0; font-size: 14px; font-weight: bold;">
-                <input type="checkbox" id="chk-legal-accept" style="width: auto; margin-right: 10px;" onclick="evaluarAceptacionLegal()">
-                <label for="chk-legal-accept" style="cursor:pointer;">He leído, acepto el mandato y firmo este escudo de protección</label>
+            <div style="margin: 12px 0; font-size: 13px; font-weight: bold;">
+                <input type="checkbox" id="chk-legal-accept" style="width: auto; margin-right: 8px;" onclick="evaluarAceptacionLegal()">
+                <label for="chk-legal-accept" style="cursor:pointer;" id="lbl-accept-text">He leído, acepto el acuerdo y firmo para proteger mi proceso de viaje</label>
             </div>
 
-            <div style="margin-top: 20px;">
-                <button id="btn-entrar" class="btn-primary" onclick="iniciarRutaViaje()" disabled style="opacity: 0.5; cursor: not-allowed;">Acepto y Entrar</button>
-                <button id="btn-cerrar" class="btn-danger" onclick="handleClose()">Cerrar App</button>
+            <div style="margin-top: 15px;">
+                <button id="btn-entrar" class="btn-primary" onclick="iniciarRutaViaje()" disabled style="opacity: 0.5; cursor: not-allowed;">Acepto y Firmar Acuerdo</button>
+                <button id="btn-cerrar" class="btn-danger" onclick="handleClose()">Cerrar</button>
             </div>
         </div>
 
-        <!-- VISTA 2: FORMULARIO DE RUTA -->
+        <!-- VISTA 2: FORMULARIO AVANZADO CON CAMPOS COMPLETOS PARA PRE-LLENAR GOOGLE FLIGHTS -->
         <div id="view-form" class="hidden">
-            <h2 id="form-title">Datos del Itinerario y Pasajero</h2>
-            <p id="form-desc" style="color: #666; font-size: 14px;">Complete los campos para el despliegue de opciones en el motor de Google Fly.</p>
-            <div style="margin: 20px 0; text-align: left; display: inline-block; width: 100%;">
-                <label style="font-size: 13px; font-weight: bold; color: #004080;" id="lbl-origen">Ciudad de Origen (Código IATA):</label><br>
-                <input type="text" id="origen" placeholder="Ej: MIA"><br>
-                
-                <label style="font-size: 13px; font-weight: bold; color: #004080; margin-top: 10px; display: inline-block;" id="lbl-escala">Escala intermedia opcional:</label><br>
-                <input type="text" id="escala" placeholder="Ej: PTY u otro punto"><br>
-                
-                <label style="font-size: 13px; font-weight: bold; color: #004080; margin-top: 10px; display: inline-block;" id="lbl-destino">Ciudad de Destino (Código IATA):</label><br>
-                <input type="text" id="destino" placeholder="Ej: HAV"><br>
+            <h2 id="form-title">Itinerario y Preferencias de Vuelo</h2>
+            <p id="form-desc" style="color: #666; font-size: 13px;">Ingrese los datos precisos para que Google Flights se abra prácticamente listo para su revisión final.</p>
+            
+            <div style="text-align: left; display: inline-block; width: 100%; font-size: 13px;">
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;"><label id="lbl-origen" style="font-weight: bold; color: #004080;">Origen (IATA):</label><input type="text" id="origen" placeholder="Ej: MIA"></div>
+                    <div style="flex: 1;"><label id="lbl-destino" style="font-weight: bold; color: #004080;">Destino (IATA):</label><input type="text" id="destino" placeholder="Ej: MAD"></div>
+                </div>
 
-                <label style="font-size: 13px; font-weight: bold; color: #004080; margin-top: 10px; display: inline-block;" id="lbl-horas">Tiempo estimado de conexión:</label><br>
-                <input type="text" id="horas_escala" placeholder="Ej: 2 horas y media"><br>
+                <div style="display: flex; gap: 10px; margin-top: 8px;">
+                    <div style="flex: 1;"><label id="lbl-salida" style="font-weight: bold; color: #004080;">Fecha Salida:</label><input type="date" id="fecha_salida"></div>
+                    <div style="flex: 1;"><label id="lbl-regreso" style="font-weight: bold; color: #004080;">Fecha Regreso (Opcional):</label><input type="date" id="fecha_regreso"></div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 8px;">
+                    <div style="flex: 1;">
+                        <label id="lbl-tipo" style="font-weight: bold; color: #004080;">Tipo de Viaje:</label>
+                        <select id="tipo_viaje">
+                            <option value="1">Ida y Vuelta / Round trip</option>
+                            <option value="2">Ida / One way</option>
+                            <option value="3">Multiciudad / Multi-city</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label id="lbl-clase" style="font-weight: bold; color: #004080;">Clase:</label>
+                        <select id="clase_asiento">
+                            <option value="economy">Económica / Economy</option>
+                            <option value="premium">Económica Premium</option>
+                            <option value="business">Ejecutiva / Business</option>
+                            <option value="first">Primera / First</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 8px;">
+                    <div style="flex: 1;"><label id="lbl-pasajeros" style="font-weight: bold; color: #004080;">Pasajeros (Adultos):</label><input type="number" id="pasajeros" value="1" min="1" max="9"></div>
+                    <div style="flex: 1;"><label id="lbl-escala" style="font-weight: bold; color: #004080;">Escalas preferidas:</label>
+                        <select id="escalas">
+                            <option value="any">Cualquiera / Any</option>
+                            <option value="1">Máximo 1 escala</option>
+                            <option value="nonstop">Solo vuelos directos</option>
+                        </select>
+                    </div>
+                </div>
             </div>
+
             <div id="error-box" class="error-message hidden"></div>
-            <div style="margin-top: 25px;">
-                <button class="btn-primary" id="btn-procesar" onclick="procesarAsesoria()">Verificar y Activar Copiloto</button>
-                <button class="btn-danger" id="btn-cancelar" onclick="switchView('view-home')">Cancelar</button>
+            
+            <div style="margin-top: 20px;">
+                <button class="btn-primary" id="btn-procesar" onclick="prepararConexionRespiratoria()">Continuar a Relajación y Activación</button>
+                <button class="btn-danger" id="btn-cancelar" onclick="switchView('view-home')">Atrás</button>
             </div>
         </div>
 
-        <!-- VISTA 3: CÍRCULO RESPIRATORIO + BOTÓN MANUAL DE GOOGLE FLY ABAJO -->
+        <!-- VISTA 3: CÍRCULO RESPIRATORIO + INSTRUCCIÓN CLARA + BOTÓN GOOGLE FLY -->
         <div id="view-loading" class="hidden">
-            <h2 id="load-title">Preparando tu Conexión con Google Fly</h2>
-            <p id="load-desc" style="color: #666; font-size: 14px;">Inhalando calma, liberando el estrés de ruta...</p>
+            <h2 id="load-title">Preparando Tu Tranquilidad</h2>
+            <p id="load-desc" style="color: #555; font-size: 13px; line-height: 1.4;">Inhala profundo. Suelta toda tensión. Estamos blindando tu proceso.</p>
             
-            <!-- Círculo respiratorio con frases secuenciales únicas guardadas en LocalStorage (Kernel Kernel-ready) -->
-            <div id="breathing-circle"><span id="breath-txt">Inhala profundo</span></div>
+            <!-- Círculo respiratorio secuencial único ordenado por kernel LocalStorage -->
+            <div id="breathing-circle"><span id="breath-txt">Inhala calma</span></div>
             
-            <p id="load-sub" style="font-size: 13px; color: #888; margin-top: 10px;">Tu mente en paz. Cuando estés listo, haz clic en el botón de abajo para activar tu conexión con Google Fly.</p>
-            
-            <!-- Botón manual obligatorio para conectar con Google Fly ubicado justamente debajo del círculo -->
-            <div style="margin-top: 25px;">
-                <button class="btn-success" id="btn-conectar-google-fly" onclick="conectarGoogleFlyManual()">✈️ CONECTAR CON GOOGLE FLY</button>
+            <div style="background: #e8f4fd; border: 1px solid #bbe1fa; padding: 10px; border-radius: 6px; font-size: 12px; color: #004080; margin: 10px 0; text-align: left; line-height: 1.4;">
+                💡 <strong>AVISO IMPORTANTE PARA TI:</strong> Una vez que hagas clic en el botón verde de abajo, se abrirá Google Flights con tu ruta lista. En la ventana lateral podrás hablarme en todo momento con total confianza. Pregúntame con calma cualquier duda (asientos, maletas, tarifas); te responderé de forma sencilla y clara como un agente experto para cuidarte de cualquier error.
+            </div>
+
+            <!-- Botón obligatorio de activación manual de Google Fly -->
+            <div style="margin-top: 15px;">
+                <button class="btn-success" id="btn-conectar-google-fly" onclick="abrirEspacioTrabajoDividido()">✈️ ABRIR GOOGLE FLY Y COPILOTO PROTECTOR</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- CONSOLA FLOTANTE DE ACOMPAÑAMIENTO CON MICRÓFONO Y CHAT -->
-<div id="view-split" class="app-companion-wrapper hidden">
-    <div class="guardian-header">Copiloto Protector 24/7</div>
-    <div class="guardian-body" id="chat-stream">
-        <div class="chat-bubble">¡Hola! Estoy aquí contigo. Se ha abierto tu ventana de Google Fly. Puedes hablarme o escribirme aquí si tienes dudas sobre campos de pago, maletas o seguros. Todo saldrá bien.</div>
+<!-- VISTA 4: ESPACIO DE TRABAJO DIVIDIDO (PANTALLA PARTIDA) -->
+<div id="view-split" class="split-workspace hidden">
+    <!-- Panel Izquierdo: Google Flights Precargado -->
+    <div class="iframe-pane">
+        <iframe id="google-flights-frame" src="about:blank" title="Google Flights Oficial"></iframe>
     </div>
-    <div class="guardian-footer">
-        <div class="control-row">
-            <button id="btn-mic-toggle" class="btn-mic" onclick="toggleMic()">🎙️ Micrófono ON</button>
-            <span id="mic-status" style="font-size:12px; color:#555;">Escuchando...</span>
+
+    <!-- Panel Derecho: Ventana de Copiloto Acompañante con Voz y Chat No Repetitivo -->
+    <div class="copilot-pane">
+        <div class="copilot-header">Copiloto Protector AL CIELO</div>
+        <div class="copilot-body" id="chat-stream">
+            <div class="chat-bubble">¡Hola! Ya tienes tus vuelos en pantalla. Respira tranquilo, estoy aquí contigo. Si tienes cualquier duda sobre algún precio, maleta o botón, háblame por el micrófono o escríbeme aquí mismo. Te guiaré paso a paso sin prisas.</div>
         </div>
-        <div class="control-row">
-            <input type="text" id="user-input-text" placeholder="Escribe tu duda aquí..." onkeypress="handleKey(event)">
-            <button class="btn-send" onclick="enviarTextoDuda()">Enviar</button>
-        </div>
-        <div class="control-row" style="justify-content: center; margin-top: 5px;">
-            <button class="btn-danger" onclick="handleClose()" style="font-size: 12px; padding: 6px 12px; margin: 0;">Terminar Sesión</button>
+        <div class="copilot-footer">
+            <div class="control-row">
+                <button id="btn-mic-toggle" class="btn-mic" onclick="toggleMic()">🎙️ Micrófono ON</button>
+                <button class="btn-danger" onclick="handleClose()" style="font-size: 12px; padding: 10px;">Salir</button>
+            </div>
+            <div class="control-row">
+                <input type="text" id="user-input-text" placeholder="Escribe tu duda aquí..." onkeypress="handleKey(event)" style="margin:0;">
+                <button class="btn-primary" onclick="enviarTextoDuda()" style="margin:0; padding: 10px 14px;">Enviar</button>
+            </div>
+            <div style="font-size: 11px; color: #666; text-align: center; margin-top: 2px;">
+                Asistencia privada bajo protección legal de May Roga LLC.
+            </div>
         </div>
     </div>
 </div>
@@ -215,8 +302,9 @@ let micActive = true;
 let recognition = null;
 let urlGoogleFlightsGlobal = "https://www.google.com/travel/flights";
 let breathInterval = null;
+let voicedInstructionTriggered = false;
 
-// Banco estricto y ordenado de frases antiagobio, antiestrés y relajación (sin repetición, orden numérico perfecto)
+// Banco estricto de frases de relajación, antiagobio y antiestrés (orden numérico perfecto, sin repetición cíclica)
 const frasesRelajacionES = [
     "1. Inhala despacio y suelta cualquier carga mental que lleves.",
     "2. Cada respiración te devuelve la paz y el control total.",
@@ -227,7 +315,7 @@ const frasesRelajacionES = [
     "7. Un paso a la vez, tu mente se aclara y descansa.",
     "8. Libera el agobio; mereces un viaje tranquilo y sin estrés.",
     "9. Siente el aire puro llenando de calma tu interior.",
-    "10. Estás exactamente donde debes estar, seguro y en paz."
+    "10. Recuerda que al abrir Google Fly podrás pedirme ayuda por voz con total confianza, esperando unos segundos para tu respuesta clara y sencilla."
 ];
 
 const frasesRelajacionEN = [
@@ -240,10 +328,9 @@ const frasesRelajacionEN = [
     "7. One step at a time, your mind clears and rests.",
     "8. Let go of overwhelm; you deserve a calm, stress-free trip.",
     "9. Feel pure air filling your inner self with deep calm.",
-    "10. You are right where you need to be, safe and peaceful."
+    "10. Remember that once in Google Fly you can ask for voice help calmly, waiting a few seconds for your clear and simple answer."
 ];
 
-// Lógica de Kernel LocalStorage para índice secuencial sin repetición ni reinicios erróneos
 function obtenerSiguienteFraseSecuencial() {
     let storageKey = "kernel_breath_index_" + currentLang;
     let indexStr = localStorage.getItem(storageKey);
@@ -251,14 +338,11 @@ function obtenerSiguienteFraseSecuencial() {
     
     let banco = currentLang === 'es' ? frasesRelajacionES : frasesRelajacionEN;
     
-    // Seguridad ante límites
     if (isNaN(currentIndex) || currentIndex < 0 || currentIndex >= banco.length) {
         currentIndex = 0;
     }
     
     let fraseSeleccionada = banco[currentIndex];
-    
-    // Incrementar y dar la vuelta de manera estricta al terminar el último (bucle cíclico perfecto)
     let siguienteIndex = (currentIndex + 1) % banco.length;
     localStorage.setItem(storageKey, siguienteIndex.toString());
     
@@ -267,54 +351,61 @@ function obtenerSiguienteFraseSecuencial() {
 
 function iniciarCicloRespiratorioDinamico() {
     if (breathInterval) clearInterval(breathInterval);
-    
     let spanTxt = document.getElementById('breath-txt');
     
-    // Mostrar frase inmediata
     let fraseActual = obtenerSiguienteFraseSecuencial();
     spanTxt.innerText = fraseActual;
-    speak(fraseActual);
+    hablarVozClara(fraseActual);
     
-    // Rotar automáticamente cada 9 segundos mientras el usuario permanece en la pantalla de carga
     breathInterval = setInterval(() => {
         let proximaFrase = obtenerSiguienteFraseSecuencial();
         spanTxt.innerText = proximaFrase;
-        speak(proximaFrase);
+        hablarVozClara(proximaFrase);
     }, 9000);
 }
 
 const translations = {
     es: {
         title: "AL CIELO",
-        subtitle: "Mecanismo Tecnológico Privado de Asistencia y Acompañamiento al Viajero.",
-        entrar: "Acepto y Entrar",
-        cerrar: "Cerrar App",
-        formTitle: "Datos del Itinerario y Pasajero",
-        formDesc: "Complete los campos para el despliegue de opciones en el motor de Google Fly.",
-        lblOrigen: "Ciudad de Origen (Código IATA):",
-        lblEscala: "Escala intermedia opcional:",
-        lblDestino: "Ciudad de Destino (Código IATA):",
-        lblHoras: "Tiempo estimado de conexión:",
-        procesar: "Verificar y Activar Copiloto",
-        cancelar: "Cancelar",
-        loadTitle: "Preparando tu Conexión con Google Fly",
-        loadDesc: "Inhalando calma, liberando el estrés de ruta..."
+        subtitle: "Servicio Profesional Privado de Orientación, Acompañamiento y Blindaje contra Errores de Viaje.",
+        acceptText: "He leído, acepto el acuerdo y firmo para proteger mi proceso de viaje",
+        entrar: "Acepto y Firmar Acuerdo",
+        cerrar: "Cerrar",
+        formTitle: "Itinerario y Preferencias de Vuelo",
+        formDesc: "Ingrese los datos precisos para que Google Flights se abra prácticamente listo para su revisión final.",
+        lblOrigen: "Origen (IATA):",
+        lblDestino: "Destino (IATA):",
+        lblSalida: "Fecha Salida:",
+        lblRegreso: "Fecha Regreso (Opcional):",
+        lblTipo: "Tipo de Viaje:",
+        lblClase: "Clase:",
+        lblPasajeros: "Pasajeros (Adultos):",
+        lblEscala: "Escalas preferidas:",
+        procesar: "Continuar a Relajación y Activación",
+        cancelar: "Atrás",
+        loadTitle: "Preparando Tu Tranquilidad",
+        loadDesc: "Inhala profundo. Suelta toda tensión. Estamos blindando tu proceso."
     },
     en: {
         title: "TO THE SKY",
-        subtitle: "Private Technological Mechanism for Traveler Assistance and Guidance.",
-        entrar: "Accept & Enter",
-        cerrar: "Close App",
-        formTitle: "Itinerary & Passenger Data",
-        formDesc: "Fill in the fields to deploy live flight options via Google Fly.",
-        lblOrigen: "Origin City (IATA Code):",
-        lblEscala: "Optional intermediate stop:",
-        lblDestino: "Destination City (IATA Code):",
-        lblHoras: "Estimated connection time:",
-        procesar: "Verify & Activate Copilot",
-        cancelar: "Cancel",
-        loadTitle: "Preparing your Connection to Google Fly",
-        loadDesc: "Inhaling calm, releasing route stress..."
+        subtitle: "Private Professional Guidance and Travel Shielding Service.",
+        acceptText: "I have read, accept the agreement and sign to protect my travel process",
+        entrar: "Accept & Sign Agreement",
+        cerrar: "Close",
+        formTitle: "Itinerary & Flight Preferences",
+        formDesc: "Enter precise details so Google Flights opens almost ready for your final review.",
+        lblOrigen: "Origin (IATA):",
+        lblDestino: "Destination (IATA):",
+        lblSalida: "Departure Date:",
+        lblRegreso: "Return Date (Optional):",
+        lblTipo: "Trip Type:",
+        lblClase: "Class:",
+        lblPasajeros: "Passengers (Adults):",
+        lblEscala: "Preferred Stops:",
+        procesar: "Continue to Relaxation & Activation",
+        cancelar: "Back",
+        loadTitle: "Preparing Your Peace of Mind",
+        loadDesc: "Inhale deep. Release all tension. We are shielding your process."
     }
 };
 
@@ -323,14 +414,19 @@ function setLanguage(lang) {
     let t = translations[lang];
     document.getElementById('title').innerText = t.title;
     document.getElementById('subtitle').innerText = t.subtitle;
+    document.getElementById('lbl-accept-text').innerText = t.acceptText;
     document.getElementById('btn-entrar').innerText = t.entrar;
     document.getElementById('btn-cerrar').innerText = t.cerrar;
     document.getElementById('form-title').innerText = t.formTitle;
     document.getElementById('form-desc').innerText = t.formDesc;
     document.getElementById('lbl-origen').innerText = t.lblOrigen;
-    document.getElementById('lbl-escala').innerText = t.lblEscala;
     document.getElementById('lbl-destino').innerText = t.lblDestino;
-    document.getElementById('lbl-horas').innerText = t.lblHoras;
+    document.getElementById('lbl-salida').innerText = t.lblSalida;
+    document.getElementById('lbl-regreso').innerText = t.lblRegreso;
+    document.getElementById('lbl-tipo').innerText = t.lblTipo;
+    document.getElementById('lbl-clase').innerText = t.lblClase;
+    document.getElementById('lbl-pasajeros').innerText = t.lblPasajeros;
+    document.getElementById('lbl-escala').innerText = t.lblEscala;
     document.getElementById('btn-procesar').innerText = t.procesar;
     document.getElementById('btn-cancelar').innerText = t.cancelar;
     document.getElementById('load-title').innerText = t.loadTitle;
@@ -349,10 +445,11 @@ function switchView(viewId) {
     
     if (viewId === 'view-split') {
         document.getElementById('wrapper-setup-views').classList.add('hidden');
+        document.getElementById('view-split').classList.remove('hidden');
     } else {
         document.getElementById('wrapper-setup-views').classList.remove('hidden');
+        document.getElementById(viewId).classList.remove('hidden');
     }
-    document.getElementById(viewId).classList.remove('hidden');
 }
 
 function evaluarAceptacionLegal() {
@@ -371,70 +468,81 @@ function evaluarAceptacionLegal() {
 
 function iniciarRutaViaje() {
     switchView('view-form');
-    speak(currentLang === 'es' ? "Por favor ingrese su ciudad de origen y destino." : "Please enter your origin and destination city.");
+    hablarVozClara(currentLang === 'es' ? "Por favor completa los datos de tu vuelo para dejarlo listo." : "Please fill in your flight details to get it ready.");
 }
 
-function speak(text) {
+/* Síntesis de voz clara, fuerte, fácil de entender (para niño de 8 años / adulto estresado) */
+function hablarVozClara(text) {
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
         let textoLimpio = text.replace(/<\/?[^>]+(>|$)/g, "").replace(/•/g, "").replace(/➔/g, "hacia").replace(/^\d+\.\s*/, "");
         let utterance = new SpeechSynthesisUtterance(textoLimpio);
         utterance.lang = currentLang === 'es' ? 'es-ES' : 'en-US';
-        utterance.rate = 0.95; // Velocidad pausada y relajante
+        utterance.rate = 0.90; // Pausado, claro y firme
+        utterance.pitch = 1.0; 
         window.speechSynthesis.speak(utterance);
     }
 }
 
-async function procesarAsesoria() {
+function prepararConexionRespiratoria() {
     let org = document.getElementById('origen').value.trim();
     let dest = document.getElementById('destino').value.trim();
-    let esc = document.getElementById('escala').value.trim();
-    let hrs = document.getElementById('horas_escala').value.trim();
+    let depDate = document.getElementById('fecha_salida').value;
+    let retDate = document.getElementById('fecha_regreso').value;
+    let tripType = document.getElementById('tipo_viaje').value;
+    let pax = document.getElementById('pasajeros').value;
     let errBox = document.getElementById('error-box');
 
     if (!org || !dest) {
-        let msg = currentLang === 'es' ? "¡Opa! Origen y destino son necesarios." : "Oops! Origin and destination are required.";
+        let msg = currentLang === 'es' ? "Por favor ingresa al menos el origen y el destino." : "Please enter at least origin and destination.";
         errBox.innerText = msg;
         errBox.classList.remove('hidden');
-        speak(msg);
+        hablarVozClara(msg);
         return;
     }
     errBox.classList.add('hidden');
     
-    // Generar URL personalizada con los códigos IATA ingresados por el cliente
-    let origin_iata = org.toUpperCase().substring(0, 3);
-    let destination_iata = dest.toUpperCase().substring(0, 3);
-    urlGoogleFlightsGlobal = `https://www.google.com/travel/flights?q=flights%20from%20${origin_iata}%20to%20${destination_iata}`;
-
-    // Cambiar a la vista del círculo respiratorio
-    switchView('view-loading');
+    // Construcción avanzada de URL para Google Flights con parámetros completos para evitar que el cliente tenga que rellenar
+    let o = org.toUpperCase().substring(0, 3);
+    let d = dest.toUpperCase().substring(0, 3);
     
-    // Iniciar el motor de frases antiagobio no repetitivas sincronizadas con LocalStorage
-    iniciarCicloRespiratorioDinamico();
-} 
+    // URL estructurada de Google Flights con parámetros de búsqueda avanzados
+    let queryParams = `flights from ${o} to ${d}`;
+    if (depDate) queryParams += ` on ${depDate}`;
+    if (retDate && tripType === "1") queryParams += ` returning ${retDate}`;
+    
+    urlGoogleFlightsGlobal = `https://www.google.com/travel/flights?q=${encodeURIComponent(queryParams)}`;
 
-// CONEXIÓN MANUAL ESTRICTA: Solo ocurre si el usuario da clic físico en el botón debajo del círculo
-function conectarGoogleFlyManual() {
+    switchView('view-loading');
+    iniciarCicloRespiratorioDinamico();
+}
+
+// CONEXIÓN MANUAL ESTRICTA: Solo ocurre al dar clic en el botón de Google Fly
+function abrirEspacioTrabajoDividido() {
     if (breathInterval) {
         clearInterval(breathInterval);
         breathInterval = null;
     }
     
-    // Transición a la consola flotante protectora
+    // Cambiar a la vista dividida
     switchView('view-split');
     
-    // Abrir ventana oficial con el link oficial de Google Fly
-    window.open(urlGoogleFlightsGlobal, '_blank');
+    // Cargar la URL pre-llenada en el iframe izquierdo
+    document.getElementById('google-flights-frame').src = urlGoogleFlightsGlobal;
     
-    // Activar escucha continua de voz y chat asistente
+    // Iniciar asistencia de voz y chat protector en el panel derecho
     iniciarReconocimientoVoz();
+    
+    let bienvenidaCopiloto = currentLang === 'es'
+        ? "Ya estamos en Google Flights. Respira hondo. Si te sale una tarifa que no entiendes o un recargo de maleta, pregúntame aquí con confianza. Te responderé de forma muy sencilla."
+        : "We are now in Google Flights. Take a deep breath. If you see a fare you don't understand, ask me here with confidence. I will answer simply.";
+    
+    agregarMensajeChat("Copiloto: " + bienvenidaCopiloto);
+    hablarVozClara(bienvenidaCopiloto);
 }
 
 function iniciarReconocimientoVoz() {
-    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        document.getElementById('mic-status').innerText = "Voz no soportada.";
-        return;
-    }
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return;
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognition = new SpeechRec();
     recognition.lang = currentLang === 'es' ? 'es-ES' : 'en-US';
@@ -459,19 +567,16 @@ function iniciarReconocimientoVoz() {
 function toggleMic() {
     micActive = !micActive;
     let btn = document.getElementById('btn-mic-toggle');
-    let status = document.getElementById('mic-status');
     if (micActive) {
-        btn.innerText = currentLang === 'es' ? "🎙️ Micrófono ON" : "🎙️ Mic Muted OFF";
+        btn.innerText = currentLang === 'es' ? "🎙️ Micrófono ON" : "🎙️ Mic ON";
         btn.classList.remove('muted');
-        status.innerText = currentLang === 'es' ? "Escuchando..." : "Listening...";
         if(recognition) try { recognition.start(); } catch(e) {}
-        speak(currentLang === 'es' ? "Micrófono encendido." : "Microphone on.");
+        hablarVozClara(currentLang === 'es' ? "Micrófono encendido." : "Microphone on.");
     } else {
-        btn.innerText = currentLang === 'es' ? "🔇 Micrófono OFF" : "🔇 Mic Muted ON";
+        btn.innerText = currentLang === 'es' ? "🔇 Micrófono OFF" : "🔇 Mic OFF";
         btn.classList.add('muted');
-        status.innerText = currentLang === 'es' ? "Silenciado." : "Muted.";
         if(recognition) recognition.stop();
-        speak(currentLang === 'es' ? "Micrófono apagado." : "Microphone off.");
+        hablarVozClara(currentLang === 'es' ? "Micrófono apagado, puedes leer con calma." : "Microphone off.");
     }
 }
 
@@ -493,43 +598,39 @@ function agregarMensajeChat(txt) {
     let div = document.createElement('div');
     div.className = 'chat-bubble';
     div.innerHTML = txt;
-    stream.appendChild(div);
     stream.scrollTop = stream.scrollHeight;
 }
 
 function procesarRespuestaAsistente(pregunta) {
     let lower = pregunta.toLowerCase();
     let respuesta = currentLang === 'es' 
-        ? "No te preocupes por eso. Si te piden un cargo extra que no entiendes, búscalo bien o ignóralo si no es obligatorio para volar."
-        : "Don't worry about that. If they ask for an extra charge you don't understand, look closely or ignore it if it's not mandatory.";
+        ? "No te preocupes. Lee con calma las opciones en pantalla. Si te piden un seguro o maleta extra que no necesitas, desmárcalo para ahorrar dinero. ¿Quieres que veamos otra fecha?"
+        : "Don't worry. Read the options on screen calmly. If they ask for insurance you don't need, uncheck it to save money.";
     
     if (lower.includes("seguro") || lower.includes("proteccion") || lower.includes("insurance")) {
         respuesta = currentLang === 'es'
-            ? "El seguro de la aerolínea siempre es opcional. Si no lo deseas, selecciona 'no gracias' para evitar cobros extra."
-            : "Airline insurance is always optional. If you don't want it, select 'no thanks' to avoid extra charges.";
+            ? "El seguro opcional se puede quitar. Búscalo en la pantalla y desmárcalo si prefieres no pagarlo."
+            : "Optional insurance can be removed. Look for it on screen and uncheck it if you prefer not to pay.";
     } else if (lower.includes("maleta") || lower.includes("equipaje") || lower.includes("bag")) {
         respuesta = currentLang === 'es'
-            ? "Verifica que el peso de tu maleta coincida con lo permitido para que no te cobren dinero de más al abordar."
-            : "Verify that your bag's weight matches what's allowed to avoid paying extra money at the boarding gate.";
+            ? "Revisa que tu tarifa incluya equipaje de mano. Si solo llevas mochila personal, la tarifa básica es tu mejor opción para gastar menos."
+            : "Check if your fare includes carry-on luggage. If you only carry a personal backpack, the basic fare is best to spend less.";
     }
+    
     agregarMensajeChat("Copiloto: " + respuesta);
-    speak(respuesta);
+    hablarVozClara(respuesta);
 }
 
 function handleClose() { 
-    let confirmMsg = currentLang === 'es' ? "¿Desea finalizar la sesión? Los datos temporales se borrarán inmediatamente por seguridad." : "Do you wish to end the session? Temporary data will be erased immediately for security."; 
+    let confirmMsg = currentLang === 'es' ? "¿Deseas salir? Tus datos temporales se borrarán de inmediato para proteger tu privacidad." : "Do you wish to exit? Temporary data will be cleared immediately."; 
     if (confirm(confirmMsg)) { 
         window.location.href = "about:blank"; 
     } 
 } 
 </script> 
 </body> 
-</html> """ 
+</html> """
 
 @app.get("/", response_class=HTMLResponse) 
 async def home(): 
     return HTML_INDEX
-
-@app.post("/traducir_itinerario") 
-async def traducir_itinerario(request: Request): 
-    return JSONResponse(content={"status": "ok"})
