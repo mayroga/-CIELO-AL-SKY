@@ -28,8 +28,8 @@ async def obtener_frases_respiracion(lang: str = "es"):
     return {"frases": kernel.frases_respiracion_en}
 
 @app.get("/opciones_vuelo")
-async def obtener_opciones_vuelo_endpoint(lang: str = "es"):
-    resultado = kernel.obtener_opciones_vuelo(lang)
+async def obtener_opciones_vuelo_endpoint(origen: str = "Miami", destino: str = "La Habana", escala: str = "", lang: str = "es"):
+    resultado = kernel.obtener_opciones_vuelo(origen, destino, escala, lang)
     return JSONResponse(content=resultado)
 
 @app.post("/validar")
@@ -44,4 +44,5 @@ async def traducir_itinerario_endpoint(origen: str = Form(...), escala: str = Fo
 
 @app.post("/destroy_session")
 async def destroy_session():
+    kernel.session_active = False
     return {"status": "session_destroyed", "message": "Memoria limpiada con éxito"}
