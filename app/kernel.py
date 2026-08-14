@@ -64,29 +64,39 @@ class AsesorKernel:
 
     def traducir_itinerario(self, origen: str, escala: str, destino: str, horas_escala: str, lang: str = "es"):
         if lang == "es":
-            salida = f"Vuelo inicial saliendo desde {origen} con destino al punto de conexión en {escala}."
-            estancia = f"Escala confirmada en {escala} con un tiempo de espera de {horas_escala}. Gestión automática de equipaje en tránsito asegurada por la aerolínea."
-            llegada = f"Vuelo de conexión desde {escala} con llegada final y directa a {destino}."
-            return {"paso_1": salida, "paso_2": estancia, "paso_3": llegada}
+            if escala and escala.strip():
+                paso_1 = f"Vuelo inicial saliendo desde {origen} con destino al punto de conexión en {escala}."
+                paso_2 = f"Escala confirmada en {escala} con un tiempo de espera de {horas_escala}. Gestión automática de equipaje en tránsito asegurada por la aerolínea."
+                paso_3 = f"Vuelo de conexión desde {escala} con llegada final y directa a {destino}."
+            else:
+                paso_1 = f"Vuelo directo programado y confirmado saliendo desde {origen}."
+                paso_2 = ""
+                paso_3 = f"Llegada directa y sin escalas al destino final en {destino}."
+            return {"paso_1": paso_1, "paso_2": paso_2, "paso_3": paso_3}
         else:
-            salida = f"Initial flight departing from {origen} to the connection point in {escala}."
-            estancia = f"Confirmed layover in {escala} with a wait time of {horas_escala}. Automatic luggage transfer in transit handled by the airline."
-            llegada = f"Connecting flight from {origen if not escala else escala} with final direct arrival to {destino}."
-            return {"paso_1": salida, "paso_2": estancia, "paso_3": llegada}
+            if escala and escala.strip():
+                paso_1 = f"Initial flight departing from {origen} to the connection point in {escala}."
+                paso_2 = f"Confirmed layover in {escala} with a wait time of {horas_escala}. Automatic luggage transfer in transit handled by the airline."
+                paso_3 = f"Connecting flight from {escala} with final direct arrival to {destino}."
+            else:
+                paso_1 = f"Scheduled direct flight departing from {origen}."
+                paso_2 = ""
+                paso_3 = f"Direct arrival with no stops to the final destination in {destino}."
+            return {"paso_1": paso_1, "paso_2": paso_2, "paso_3": paso_3}
 
     def obtener_opciones_vuelo(self, origen: str, destino: str, escala: str = "", lang: str = "es"):
-        # Lógica central de búsqueda de vuelos directos y de conexión con aerolíneas autorizadas
+        ruta_str = f"{origen} -> {escala + ' -> ' if escala and escala.strip() else ''}{destino}"
         if lang == "es":
             return {
-                "ruta": f"{origen} -> {escala + ' -> ' if escala else ''}{destino}",
+                "ruta": ruta_str,
                 "opciones": [
                     {
                         "titulo": "1. Opción Económica (Conexión / Vuelo Regular)",
-                        "descripcion": f"Vuelo optimizado para buscar la tarifa más baja disponible en rutas hacia {destino}, gestionando escalas de forma eficiente."
+                        "descripcion": f"Vuelo optimizado para buscar la tarifa más baja disponible en la ruta {ruta_str}, gestionando tarifas accesibles."
                     },
                     {
                         "titulo": "2. Opción Protegida (Aerolíneas Autorizadas)",
-                        "descripcion": "Incluye cobertura de equipaje y respaldo directo con aerolíneas aliadas (como Copa, Avianca, American Airlines, entre otras)."
+                        "descripcion": f"Incluye cobertura de equipaje y respaldo directo con aerolíneas aliadas para la ruta {ruta_str}."
                     },
                     {
                         "titulo": "3. Opción Directa / Especial",
@@ -94,21 +104,21 @@ class AsesorKernel:
                     },
                     {
                         "titulo": "4. Opción Charter / Alternativa",
-                        "descripcion": "Opciones adicionales a través de operadores autorizados (Cubazul, Xael, Aerocuba) según disponibilidad de ruta."
+                        "descripcion": f"Opciones adicionales a través de operadores autorizados (Cubazul, Xael, Aerocuba) para {destino} según disponibilidad."
                     }
                 ]
             }
         else:
             return {
-                "ruta": f"{origen} -> {escala + ' -> ' if escala else ''}{destino}",
+                "ruta": ruta_str,
                 "opciones": [
                     {
                         "titulo": "1. Economic Option (Connection / Regular Flight)",
-                        "descripcion": f"Optimized flight looking for the lowest available fare on routes to {destino}, managing connections efficiently."
+                        "descripcion": f"Optimized flight looking for the lowest available fare on route {ruta_str}, managing affordable rates."
                     },
                     {
                         "titulo": "2. Protected Option (Authorized Airlines)",
-                        "descripcion": "Includes luggage coverage and direct support with partner airlines (such as Copa, Avianca, American Airlines, etc.)."
+                        "descripcion": f"Includes luggage coverage and direct support with partner airlines for route {ruta_str}."
                     },
                     {
                         "titulo": "3. Direct / Special Option",
@@ -116,7 +126,7 @@ class AsesorKernel:
                     },
                     {
                         "titulo": "4. Charter / Alternative Option",
-                        "descripcion": "Additional options through authorized operators based on route availability."
+                        "descripcion": f"Additional options through authorized operators for {destino} based on route availability."
                     }
                 ]
             }
