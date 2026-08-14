@@ -118,6 +118,7 @@
             <button id="btn-cerrar" class="btn-danger" onclick="handleClose()">Cerrar</button>
         </div>
     </div>
+
     <!-- VISTA 1.5: PARÁMETROS DE BÚSQUEDA Y CONTACTO (Sin precios inventados) -->
     <div id="view-orientacion" class="hidden">
         <h2 id="orientacion-heading">Detalles de tu Vuelo y Contacto</h2>
@@ -174,7 +175,7 @@
     <div id="view-respiracion" class="hidden">
         <h2 id="respiracion-heading">Preparando inyección en el navegador oficial de la aerolínea...</h2>
         <div id="breathing-circle">🧠</div>
-        <p id="respiracion-phrase" style="font-size: 18px; margin: 20px 0; font-style: italic; min-height: 50px; color: #457b9d; font-weight: 50px;"></p>
+        <p id="respiracion-phrase" style="font-size: 18px; margin: 20px 0; font-style: italic; min-height: 50px; color: #457b9d;"></p>
         <p style="font-size: 14px; color: #777;">Tu asistente automático está acomodando tus campos de texto limpios de forma interna.</p>
     </div>
 
@@ -198,6 +199,8 @@
         <button class="btn-primary" onclick="imprimirPDFLocal()">Imprimir / Guardar PDF</button>
         <button class="btn-danger" onclick="handleClose()">Terminar Sesión</button>
     </div>
+</div>
+
 <script>
 // ==========================================
 // VARIABLES DE ÁMBITO GLOBAL Y CONTROL DE DATOS
@@ -205,7 +208,6 @@
 let currentLang = 'es';
 let globalTimer = null;
 let totalTimeLeft = 480; // 8 minutos expresados estrictamente en segundos (8 * 60)
-
 // Almacenamiento local temporal 100% volátil (Cero servidores, cero bases de datos externos)
 let datosViaje = { correo: "", origen: "", escala: "", destino: "", horas: "" };
 let datosUsuario = { nombre: "", apellido: "", pasaporte: "", maletas: "" };
@@ -216,29 +218,29 @@ let datosUsuario = { nombre: "", apellido: "", pasaporte: "", maletas: "" };
 const content = {
     es: {
         title: "AL CIELO",
-        subtitle: "Tu asistente especializada en la gestión en vivo y rellenado de formularios de vuelos reales.",
-        enter: "Buscar Vuelos",
-        close: "Cerrar",
-        orientacionHeading: "Detalles de tu Vuelo y Contacto",
-        orientacionInstruction: "Ingresa tus datos de ruta reales para conectar en vivo con las aerolíneas autorizadas:",
-        btnSiguienteOrientacion: "Conectar y Buscar",
-        renderTitle: "Estableciendo comunicación privada segura...",
-        formHeading: "Datos Obligatorios del Pasajero",
-        formInstruction: "Escribe tus datos exactamente igual a tus documentos oficiales:",
-        btnProcesar: "Verificar Información"
+        subtitle: "Asesoría especializada en gestión logística, equipaje y normativas de carga (IATA, DOT, CBP).",
+        enter: "Iniciar Asesoría",
+        close: "Salir",
+        orientacionHeading: "Detalles de Ruta y Carga",
+        orientacionInstruction: "Ingrese los datos de origen, escala y destino para revisar la normativa aplicable:",
+        btnSiguienteOrientacion: "Consultar Normativa",
+        renderTitle: "Verificando parámetros operativos...",
+        formHeading: "Información del Envío o Pasajero",
+        formInstruction: "Complete los datos conforme a la documentación oficial:",
+        btnProcesar: "Verificar y Asesorar"
     },
     en: {
         title: "TO THE SKY",
-        subtitle: "Your specialized assistant in live management and automated filling of real flight forms.",
-        enter: "Search Flights",
-        close: "Close",
-        orientacionHeading: "Flight Details and Contact",
-        orientacionInstruction: "Enter your real route details to connect live with authorized airlines:",
-        btnSiguienteOrientacion: "Connect and Search",
-        renderTitle: "Establishing secure private communication...",
-        formHeading: "Mandatory Passenger Data",
-        formInstruction: "Write your details exactly as they appear on your official documents:",
-        btnProcesar: "Verify Information"
+        subtitle: "Specialized advisory in logistics management, baggage, and cargo regulations (IATA, DOT, CBP).",
+        enter: "Start Advisory",
+        close: "Exit",
+        orientacionHeading: "Route and Cargo Details",
+        orientacionInstruction: "Enter origin, scale, and destination details to review applicable regulations:",
+        btnSiguienteOrientacion: "Check Regulations",
+        renderTitle: "Verifying operational parameters...",
+        formHeading: "Shipment or Passenger Information",
+        formInstruction: "Complete the details according to official documentation:",
+        btnProcesar: "Verify and Advise"
     }
 };
 
@@ -258,7 +260,7 @@ function speak(text) {
 // Interfaz adaptativa de navegación entre pantallas
 function switchView(viewId) {
     document.querySelectorAll('.main-container > div').forEach(div => {
-        if (div.id !== 'reloj-global') div.classList.add('hidden');
+        if (div.id !== 'reloj-global' && div.id !== 'language-controls') div.classList.add('hidden');
     });
     document.getElementById(viewId).classList.remove('hidden');
 }
@@ -267,7 +269,6 @@ function setLanguage(lang) {
     currentLang = lang;
     document.documentElement.lang = lang;
     let c = content[lang];
-    
     document.getElementById('title').innerText = c.title;
     document.getElementById('subtitle').innerText = c.subtitle;
     document.getElementById('btn-entrar').innerText = c.enter;
@@ -287,27 +288,20 @@ function setLanguage(lang) {
 function iniciarRelojGlobal() {
     let clockBox = document.getElementById('reloj-global');
     clockBox.classList.remove('hidden');
-
     globalTimer = setInterval(() => {
         totalTimeLeft--;
-        
         let minutes = Math.floor(totalTimeLeft / 60);
         let seconds = totalTimeLeft % 60;
-        
-        // Formateo visual amigable (Ej: 07:45)
         clockBox.innerText = (currentLang === 'es' ? "Tiempo restante: " : "Time remaining: ") +
             `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
-
-        // Apagado forzado inmediato al llegar a cero
         if (totalTimeLeft <= 0) {
             clearInterval(globalTimer);
-            alert(currentLang === 'es' ? "La sesión segura de 8 minutos ha expirado." : "The 8-minute secure session has expired.");
+            alert(currentLang === 'es' ? "La sesión de asesoría ha expirado." : "The advisory session has expired.");
             window.location.href = "about:blank"; // Limpieza forzada de memoria RAM
         }
-    }, 10000); // Actualización controlada cada segundo
+    }, 1000); // Sincronizado por segundo exacto
 }
 
-// Transición inicial
 function iniciarRutaViaje() {
     iniciarRelojGlobal();
     switchView('view-orientacion');
@@ -327,7 +321,6 @@ function guardarOrientacion() {
         speak(msg);
         return;
     }
-    
     document.getElementById('error-orientacion').classList.add('hidden');
     handleEnterRender();
 }
@@ -337,27 +330,21 @@ function guardarOrientacion() {
 // ==========================================
 function handleEnterRender() {
     switchView('view-render');
-    
-    // Banco de frases iniciales únicas (Prohibido parecerse al círculo respiratorio)
     let frasesBienvenida = currentLang === 'es' ? [
-        "Estás haciendo las cosas bien. Tu asistente está despertando los sistemas oficiales.",
-        "Asegurando una conexión privada limpia y transparente. Relájate un momento.",
-        "Protegiendo tu búsqueda de cambios raros. Tu paciencia vale muchísimo."
+        "Verificando normativas vigentes para su ruta.",
+        "Analizando parámetros de carga y especificaciones técnicas.",
+        "Preparando directrices de cumplimiento normativo."
     ] : [
-        "You are doing great. Your assistant is waking up the official systems.",
-        "Securing a clean and transparent private connection. Relax for a moment.",
-        "Protecting your search from unexpected changes. Your patience is highly valued."
+        "Verifying current regulations for your route.",
+        "Analyzing cargo parameters and technical specifications.",
+        "Preparing regulatory compliance guidelines."
     ];
-
     let pBox = document.getElementById('render-phrase');
     let idx = 0;
-    
-    // Algoritmo local para mezclar el orden de las frases
     frasesBienvenida.sort(() => Math.random() - 0.5);
     pBox.innerText = frasesBienvenida[idx];
     speak(frasesBienvenida[idx]);
 
-    // Intervalo de lectura fluida para evitar aburrimiento o vacíos de audio
     let renderInterval = setInterval(() => {
         idx++;
         if (idx < frasesBienvenida.length) {
@@ -366,15 +353,15 @@ function handleEnterRender() {
         }
     }, 12000);
 
-    // Temporizador estricto para simular la rampa de encendido de Render
     setTimeout(() => {
         clearInterval(renderInterval);
         switchView('view-formulario');
-        speak(currentLang === 'es' ? "Conexión lista. Ingresa tus datos oficiales." : "Connection ready. Please enter your official details.");
-    }, 45000); // 45 segundos exactos de espera controlada
+        speak(currentLang === 'es' ? "Sistema listo. Ingrese los detalles requeridos." : "System ready. Please enter required details.");
+    }, 45000); // 45 segundos de rampa de carga
 }
+
 // ==========================================
-// MOTOR DE VALIDACIÓN Y RECTIFICACIÓN DE DATOS (ESTILO NIÑO DE 8 AÑOS)
+// MOTOR DE VALIDACIÓN Y RECTIFICACIÓN DE DATOS
 // ==========================================
 function procesarFormularioPasajero() {
     let nombreInput = document.getElementById('input-nombre').value;
@@ -382,7 +369,6 @@ function procesarFormularioPasajero() {
     let pasaporteInput = document.getElementById('input-pasaporte').value;
     let maletasInput = document.getElementById('input-maletas').value;
 
-    // 1. Limpieza estricta de espacios fantasmas
     let nombre = nombreInput.replace(/\s+/g, ' ').trim();
     let apellido = apellidoInput.replace(/\s+/g, ' ').trim();
     let pasaporte = pasaporteInput.replace(/\s+/g, '').trim();
@@ -391,11 +377,10 @@ function procesarFormularioPasajero() {
     errorBox.classList.add('hidden');
     errorBox.innerText = "";
 
-    // 2. Validación y explicación masticada del error
     if (!nombre || !apellido || !pasaporte || !maletasInput) {
-        let msg = currentLang === 'es' 
-            ? "¡Opa! Te saltaste un cuadro vacío. Por favor llénalos todos para que el avión sepa quién eres." 
-            : "Oops! You skipped a blank box. Please fill them all so the plane knows who you are.";
+        let msg = currentLang === 'es'
+            ? "Por favor complete todos los campos obligatorios para continuar con la asesoría."
+            : "Please complete all mandatory fields to continue the advisory.";
         errorBox.innerText = msg;
         errorBox.classList.remove('hidden');
         speak(msg);
@@ -403,30 +388,22 @@ function procesarFormularioPasajero() {
     }
 
     if (/\d/.test(nombre) || /\d/.test(apellido)) {
-        let msg = currentLang === 'es' 
-            ? "¡Opa! Pusiste un número dentro de tu nombre o apellido. Los nombres solo llevan letras bonitas, quítalo para continuar." 
-            : "Oops! You put a number inside your name. Names only have pretty letters, remove it to continue.";
+        let msg = currentLang === 'es'
+            ? "Los campos de nombre y apellido no deben contener números. Por favor verifique."
+            : "Name and last name fields must not contain numbers. Please verify.";
         errorBox.innerText = msg;
         errorBox.classList.remove('hidden');
         speak(msg);
         return;
     }
 
-    // Almacenamiento local volátil seguro (Cero servidores)
     datosUsuario.nombre = nombre;
     datosUsuario.apellido = apellido;
     datosUsuario.pasaporte = pasaporte;
     datosUsuario.maletas = maletasInput;
 
-    // Desplegar el Retén de la Verdad
-    let resumenHtml = `
-        <p><strong>Pasajero:</strong> ${nombre} ${apellido}</p>
-        <p><strong>Pasaporte:</strong> ${pasaporte}</p>
-        <p><strong>Equipaje declarado:</strong> ${maletasInput}</p>
-        <p><strong>Ruta:</strong> ${datosViaje.origen.toUpperCase()} ➔ ${datosViaje.destino.toUpperCase()}</p>
-    `;
+    let resumenHtml = `<p><strong>Titular:</strong> ${nombre} ${apellido}</p><p><strong>Documento:</strong> ${pasaporte}</p><p><strong>Carga / Equipaje:</strong> ${maletasInput}</p><p><strong>Ruta:</strong> ${datosViaje.origen.toUpperCase()} ➔ ${datosViaje.destino.toUpperCase()}</p>`;
     document.getElementById('resumen-datos-reten').innerHTML = resumenHtml;
-    
     document.getElementById('bloque-filtro1').classList.remove('hidden');
     document.getElementById('bloque-filtro2').classList.add('hidden');
     switchView('view-reten');
@@ -437,13 +414,10 @@ function aprobarFiltro(num) {
         document.getElementById('bloque-filtro1').classList.add('hidden');
         document.getElementById('bloque-filtro2').classList.remove('hidden');
     } else if (num === 2) {
-        // Ejecutar el Escudo de Evidencia Local (Instrucción visual)
         let msg = currentLang === 'es'
-            ? "Guardando copia de seguridad visual en tu galería. No borres esta foto."
-            : "Saving a visual backup copy to your gallery. Do not delete this photo.";
+            ? "Generando registro de asesoría y directrices de cumplimiento."
+            : "Generating advisory record and compliance guidelines.";
         speak(msg);
-        
-        // Disparar el círculo respiratorio reubicado de 30 segundos
         iniciarInyeccionRespiratoria();
     }
 }
@@ -453,25 +427,21 @@ function aprobarFiltro(num) {
 // ==========================================
 function iniciarInyeccionRespiratoria() {
     switchView('view-respiracion');
-    
-    // Biblioteca de frases exclusivas anti-stress (No repetitivas)
     let frasesInyeccion = currentLang === 'es' ? [
-        "Inhala paz, exhala la prisa. Estás tomando el control de tu tiempo.",
-        "Todo está fluyendo de manera correcta. Mantén la calma, tu escudo trabaja.",
-        "Respira profundo. Cada paso que das te acerca de forma segura a los tuyos."
+        "Revisando directrices de seguridad operacional.",
+        "Consolidando recomendaciones bajo normativa aplicable.",
+        "Procesando parámetros de cumplimiento logístico."
     ] : [
-        "Inhale peace, exhale haste. You are taking control of your time.",
-        "Everything is flowing correctly. Stay calm, your shield is working.",
-        "Breathe deeply. Every step you take brings you safely closer to your loved ones."
+        "Reviewing operational safety guidelines.",
+        "Consolidating recommendations under applicable regulations.",
+        "Processing logistical compliance parameters."
     ];
-
-    let pBox = document.getElementById('resiracion-phrase');
+    let pBox = document.getElementById('respiracion-phrase');
+    if (!pBox) return;
     let idx = 0;
-    
-    // Mezcla aleatoria local
     frasesInyeccion.sort(() => Math.random() - 0.5);
-    pBox.innerText = frasesInyeccion[0];
-    speak(frasesInyeccion[0]);
+    pBox.innerText = frasesInyeccion[idx];
+    speak(frasesInyeccion[idx]);
 
     let interval = setInterval(() => {
         idx++;
@@ -481,7 +451,6 @@ function iniciarInyeccionRespiratoria() {
         }
     }, 10000);
 
-    // Temporizador estricto de 30 segundos para finalizar inyección en el WebView
     setTimeout(() => {
         clearInterval(interval);
         finalizarYMostrarItinerario();
@@ -489,61 +458,56 @@ function iniciarInyeccionRespiratoria() {
 }
 
 // ==========================================
-// DESPLIEGUE FINAL DE PRECIO Y TRADUCCIÓN INFANTIL
+// DESPLIEGUE FINAL CONECTADO A FASTAPI Y GEMINI
 // ==========================================
-function finalizarYMostrarItinerario() {
-    // Inyección simulada de precio en vivo de aerolínea (Prohibido inventar datos aproximados)
-    let precioRealCopaAvianca = "$485.00 USD"; 
-    document.getElementById('precio-final-real').innerText = precioRealCopaAvianca;
+async function finalizarYMostrarItinerario() {
+    let itinerarioBox = document.getElementById('itinerario-masticado');
+    let precioBox = document.getElementById('precio-final-real');
+    itinerarioBox.innerText = currentLang === 'es' ? "Procesando recomendación de ruta y normativas..." : "Processing route recommendation and regulations...";
+    precioBox.innerText = "...";
 
-    // Explicación masticada estilo niño de 8 años para evitar retrasos y pérdidas
-    let tieneEscala = datosViaje.escala && datosViaje.escala.trim() !== "";
-    let itinerarioHtml = "";
+    try {
+        let formData = new URLSearchParams();
+        formData.append('origen', datosViaje.origen);
+        formData.append('escala', datosViaje.escala);
+        formData.append('destino', datosViaje.destino);
+        formData.append('horas_escala', datosViaje.horas);
+        formData.append('lang', currentLang);
 
-    if (tieneEscala) {
-        itinerarioHtml = `
-            <h3>Tu mapa de viaje explicado de forma muy fácil:</h3>
-            <p><strong>1. El primer vuelo:</strong> Te subes al primer avión en la ciudad de <strong>${datosViaje.origen.toUpperCase()}</strong>. Este avión volará directo por los aires hasta dejarte en el aeropuerto de <strong>${datosViaje.escala.toUpperCase()}</strong>.</p>
-            <p><strong>2. El descanso en la escala:</strong> Cuando bajes del avión en <strong>${datosViaje.escala.toUpperCase()}</strong>, vas a esperar caminando tranquilo o sentado descansando durante <strong>${datosViaje.horas}</strong>. Es un tiempo muy seguro y cómodo para ti. ¡No tienes que buscar tus maletas grandes! La aerolínea se encarga de cambiarlas de avión por ti mientras tú descansas.</p>
-            <p><strong>3. El segundo vuelo:</strong> Te subes al nuevo avión en ese mismo aeropuerto de escala y este te llevará directo sin detenerse hasta tu destino final en <strong>${datosViaje.destino.toUpperCase()}</strong>. ¡Llegaste a salvo!</p>
-        `;
-    } else {
-        itinerarioHtml = `
-            <h3>Tu mapa de viaje explicado de forma muy fácil:</h3>
-            <p><strong>1. Viaje Directo:</strong> Te subes al avión en la ciudad de <strong>${datosViaje.origen.toUpperCase()}</strong>. El avión volará en línea recta por el cielo sin bajarse en ningún país, hasta aterrizar directo en tu destino final en <strong>${datosViaje.destino.toUpperCase()}</strong>. ¡Es el camino más rápido y fácil!</p>
-        `;
+        let response = await fetch('/traducir_itinerario', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData
+        });
+
+        if (response.ok) {
+            let data = await response.json();
+            itinerarioBox.innerHTML = `<p>${data.itinerario_masticado}</p>`;
+            precioBox.innerText = data.precio_real || "Verificado conforme a normativa";
+        } else {
+            itinerarioBox.innerText = currentLang === 'es' ? "No se pudo establecer conexión con el sistema de asesoría." : "Could not connect to the advisory system.";
+        }
+    } catch (err) {
+        itinerarioBox.innerText = currentLang === 'es' ? "Error de conexión con el servidor." : "Server connection error.";
     }
-    
-    document.getElementById('itinerario-masticado').innerHTML = itinerarioHtml;
 
-    // Módulo de Autopropaganda Amable y Profesional
     document.getElementById('autopropaganda-nino').innerText = currentLang === 'es'
-        ? "Esta aplicación es tu gran escudo protector. Acomodamos tus datos limpios en su lugar en un segundo para que veas el precio real en tu cara, libre de trampas y letras chiquitas. ¡Cuidamos tu tiempo y tus ahorros!"
-        : "This app is your great protective shield. We place your clean data in its place in a second so you can see the real price in your face, free of traps. We protect your time and savings!";
-
+        ? "Recomendación orientativa sujeta a revisión de los estándares operativos aplicables."
+        : "Guidance recommendation subject to review of applicable operational standards.";
+    
     switchView('view-itinerario');
-    speak(currentLang === 'es' ? "¡Formulario rellenado con éxito! Revisa tu itinerario fácil." : "Form successfully filled! Review your easy itinerary.");
+    speak(currentLang === 'es' ? "Asesoría completada con éxito. Revise las directrices." : "Advisory successfully completed. Review the guidelines.");
 }
 
-// ==========================================
-// SISTEMA DE IMPRESIÓN Y EXPORTACIÓN LOCAL (PDF)
-// ==========================================
 function imprimirPDFLocal() {
-    // Activa la orden de impresión nativa del dispositivo (Celular o Computadora)
     window.print();
 }
 
-// Cierre seguro y destrucción de memoria volátil
 function handleClose() {
-    let confirmMsg = currentLang === 'es' 
-        ? "¿Seguro que deseas cerrar la sesión? Tus datos locales se borrarán inmediatamente por seguridad." 
-        : "Are you sure you want to close the session? Your local data will be erased immediately for security.";
-    
+    let confirmMsg = currentLang === 'es'
+        ? "¿Desea finalizar la sesión? Los datos temporales se borrarán inmediatamente por seguridad."
+        : "Do you wish to end the session? Temporary data will be erased immediately for security.";
     if (confirm(confirmMsg)) {
-        // Redirección limpia para limpiar la memoria RAM del teléfono
         window.location.href = "about:blank";
     }
 }
-</script>
-</body>
-</html>
