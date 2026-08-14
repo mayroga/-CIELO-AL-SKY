@@ -32,8 +32,8 @@ async def obtener_frases_respiracion(lang: str = "es"):
     return {"frases": kernel.frases_respiracion_en}
 
 @app.get("/opciones_vuelo")
-async def obtener_opciones_vuelo_endpoint(lang: str = "es"):
-    resultado = kernel.obtener_opciones_vuelo(lang)
+async def obtener_opciones_vuelo_endpoint(origen: str = "MIA", destino: str = "BOG", escala: str = "", lang: str = "es"):
+    resultado = kernel.obtener_opciones_vuelo(origen, destino, escala, lang)
     return JSONResponse(content=resultado)
 
 @app.get("/buscar_vuelos_reales")
