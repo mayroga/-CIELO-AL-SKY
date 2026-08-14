@@ -1,13 +1,8 @@
 import os
-import requests
-from typing import Optional
-from fastapi import FastAPI, Form, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, HTMLResponse
 
 app = FastAPI()
-
-# Token de Travelpayouts configurado en las variables de entorno de Render
-TRAVELPAYOUTS_TOKEN = os.environ.get("TRAVELPAYOUTS_API_TOKEN")
 
 HTML_INDEX = """<!DOCTYPE html>
 <html lang="es">
@@ -68,33 +63,29 @@ HTML_INDEX = """<!DOCTYPE html>
             font-size: 15px;
         }
         #breathing-circle {
-            width: 150px;
-            height: 150px;
+            width: 170px;
+            height: 170px;
             background-color: #a8dadc;
             border-radius: 50%;
-            margin: 30px auto;
+            margin: 20px auto;
             display: flex;
             align-items: center;
             justify-content: center;
+            text-align: center;
+            padding: 15px;
             font-weight: bold;
             color: #fff;
-            font-size: 18px;
+            font-size: 14px;
+            box-sizing: border-box;
             animation: respirarHumanoRapido 8s infinite ease-in-out;
         }
         @keyframes respirarHumanoRapido {
             0% { transform: scale(1.0); background-color: #a8dadc; }
-            50% { transform: scale(1.4); background-color: #457b9d; }
+            50% { transform: scale(1.35); background-color: #457b9d; }
             100% { transform: scale(1.0); background-color: #a8dadc; }
         }
-        #reloj-global {
-            font-size: 14px;
-            font-weight: bold;
-            color: #dc3545;
-            text-align: right;
-            margin-bottom: 10px;
-        }
         
-        /* DISEÑO DE LA CONSOLA DE ACOMPAÑAMIENTO ASISTENCIAL */
+        /* CONSOLA DE ACOMPAÑAMIENTO */
         .app-companion-wrapper {
             max-width: 550px; margin: 30px auto; background: #fff;
             border-radius: 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.1);
@@ -124,12 +115,12 @@ HTML_INDEX = """<!DOCTYPE html>
 <body>
 <div id="wrapper-setup-views">
     <div class="main-container">
-        <div id="reloj-global" class="hidden">Tiempo restante: 08:00</div>
         <div id="language-controls">
             <button onclick="setLanguage('es')">Español</button>
             <button onclick="setLanguage('en')">English</button>
         </div>
-        <!-- VISTA 1: EL MURO DE PROTECCIÓN LEGAL Y MANDATO DEL CONSUMIDOR -->
+
+        <!-- VISTA 1: MURO LEGAL -->
         <div id="view-home">
             <h1 id="title">AL CIELO</h1>
             <p id="subtitle" style="font-size: 15px; line-height: 1.6; color: #444; margin: 15px 0; font-weight: bold;">
@@ -155,7 +146,7 @@ HTML_INDEX = """<!DOCTYPE html>
             </div>
         </div>
 
-        <!-- VISTA 2: FORMULARIO DE RUTA SIN DATOS INVENTADOS -->
+        <!-- VISTA 2: FORMULARIO DE RUTA -->
         <div id="view-form" class="hidden">
             <h2 id="form-title">Datos del Itinerario y Pasajero</h2>
             <p id="form-desc" style="color: #666; font-size: 14px;">Complete los campos para el despliegue de opciones en el motor de Google Fly.</p>
@@ -179,41 +170,29 @@ HTML_INDEX = """<!DOCTYPE html>
             </div>
         </div>
 
-        <!-- VISTA 3: EL CÍRCULO RESPIRATORIO REUBICADO DE 30 SEGUNDOS -->
+        <!-- VISTA 3: CÍRCULO RESPIRATORIO + BOTÓN MANUAL DE GOOGLE FLY ABAJO -->
         <div id="view-loading" class="hidden">
             <h2 id="load-title">Preparando tu Conexión con Google Fly</h2>
-            <p id="load-desc" style="color: #666; font-size: 14px;">Iniciando escudo protector de tarifas en tiempo real...</p>
-            <div id="breathing-circle"><span id="breath-txt">Respire</span></div>
-            <p id="load-sub" style="font-size: 13px; color: #888;">Relájese por 30 segundos mientras acomodamos tu mapa de viaje limpio.</p>
-        </div>
-
-        <!-- VISTA 4: BOTÓN MANUAL EXCLUSIVO PARA CONECTAR CON GOOGLE FLY -->
-        <div id="view-lanzamiento" class="hidden">
-            <h2 style="color: #004080;">¡Tu Viaje Seguro está Listo!</h2>
+            <p id="load-desc" style="color: #666; font-size: 14px;">Inhalando calma, liberando el estrés de ruta...</p>
             
-            <div id="itinerario-box" style="background: #f8f9fa; border: 1px solid #ccc; padding: 15px; border-radius: 8px; font-size: 14px; line-height: 1.5; margin: 15px 0; text-align: left; border-left: 5px solid #28a745;">
-                <!-- Resumen dinámico del itinerario -->
+            <!-- Círculo respiratorio con frases secuenciales únicas guardadas en LocalStorage (Kernel Kernel-ready) -->
+            <div id="breathing-circle"><span id="breath-txt">Inhala profundo</span></div>
+            
+            <p id="load-sub" style="font-size: 13px; color: #888; margin-top: 10px;">Tu mente en paz. Cuando estés listo, haz clic en el botón de abajo para activar tu conexión con Google Fly.</p>
+            
+            <!-- Botón manual obligatorio para conectar con Google Fly ubicado justamente debajo del círculo -->
+            <div style="margin-top: 25px;">
+                <button class="btn-success" id="btn-conectar-google-fly" onclick="conectarGoogleFlyManual()">✈️ CONECTAR CON GOOGLE FLY</button>
             </div>
-            
-            <div style="font-size: 16px; font-weight: bold; color: #004080; margin: 15px 0;">
-                Precio Estimado: <span id="precio-box" style="color: #28a745;">Verificando...</span>
-            </div>
-
-            <p style="font-size: 15px; color: #444; line-height: 1.5; margin: 20px 0;">Para conectar manualmente con la plataforma oficial y consultar tus vuelos, presiona el siguiente botón:</p>
-            
-            <!-- BOTÓN MANUAL EXCLUSIVO CON EL URL DE GOOGLE FLY -->
-            <button class="btn-success" id="btn-conectar-google-fly" onclick="conectarGoogleFlyManual()">✈️ CONECTAR CON GOOGLE FLY</button>
-            
-            <p style="font-size: 12px; color: #777; margin-top: 15px;" id="autopropaganda-nino">Recomendación orientativa sujeta a revisión de los estándares operativos aplicables.</p>
         </div>
     </div>
 </div>
 
-<!-- CONSOLA FLOTANTE DE ACOMPAÑAMIENTO CON MICRÓFONO ABIERTO Y TECLADO DE RESPALDO -->
+<!-- CONSOLA FLOTANTE DE ACOMPAÑAMIENTO CON MICRÓFONO Y CHAT -->
 <div id="view-split" class="app-companion-wrapper hidden">
     <div class="guardian-header">Copiloto Protector 24/7</div>
     <div class="guardian-body" id="chat-stream">
-        <div class="chat-bubble">¡Hola! Estoy aquí contigo en tu consola flotante. Se ha abierto tu ventana de Google Flights. Puedes hablarme o escribirme aquí si tienes dudas sobre campos de pago, maletas o seguros tramposos de las aerolíneas. Todo saldrá bien.</div>
+        <div class="chat-bubble">¡Hola! Estoy aquí contigo. Se ha abierto tu ventana de Google Fly. Puedes hablarme o escribirme aquí si tienes dudas sobre campos de pago, maletas o seguros. Todo saldrá bien.</div>
     </div>
     <div class="guardian-footer">
         <div class="control-row">
@@ -221,7 +200,7 @@ HTML_INDEX = """<!DOCTYPE html>
             <span id="mic-status" style="font-size:12px; color:#555;">Escuchando...</span>
         </div>
         <div class="control-row">
-            <input type="text" id="user-input-text" placeholder="Escribe tu duda aquí si hay mucho ruido..." onkeypress="handleKey(event)">
+            <input type="text" id="user-input-text" placeholder="Escribe tu duda aquí..." onkeypress="handleKey(event)">
             <button class="btn-send" onclick="enviarTextoDuda()">Enviar</button>
         </div>
         <div class="control-row" style="justify-content: center; margin-top: 5px;">
@@ -234,7 +213,75 @@ HTML_INDEX = """<!DOCTYPE html>
 let currentLang = 'es';
 let micActive = true;
 let recognition = null;
-let urlGoogleFlightsGlobal = ""; // Almacena el URL oficial de Google Flights
+let urlGoogleFlightsGlobal = "https://www.google.com/travel/flights";
+let breathInterval = null;
+
+// Banco estricto y ordenado de frases antiagobio, antiestrés y relajación (sin repetición, orden numérico perfecto)
+const frasesRelajacionES = [
+    "1. Inhala despacio y suelta cualquier carga mental que lleves.",
+    "2. Cada respiración te devuelve la paz y el control total.",
+    "3. No hay prisa; tu camino está seguro y protegido hoy.",
+    "4. Suelta la tensión de tus hombros; todo está saliendo bien.",
+    "5. Respira hondo y confía en el proceso de tu viaje.",
+    "6. La tranquilidad es tu mayor aliada en este momento.",
+    "7. Un paso a la vez, tu mente se aclara y descansa.",
+    "8. Libera el agobio; mereces un viaje tranquilo y sin estrés.",
+    "9. Siente el aire puro llenando de calma tu interior.",
+    "10. Estás exactamente donde debes estar, seguro y en paz."
+];
+
+const frasesRelajacionEN = [
+    "1. Inhale slowly and release any heavy mental burden.",
+    "2. Each breath brings back your peace and absolute control.",
+    "3. There is no rush; your journey is safe and protected.",
+    "4. Release tension from your shoulders; everything is fine.",
+    "5. Take a deep breath and trust your travel process.",
+    "6. Tranquility is your greatest ally at this very moment.",
+    "7. One step at a time, your mind clears and rests.",
+    "8. Let go of overwhelm; you deserve a calm, stress-free trip.",
+    "9. Feel pure air filling your inner self with deep calm.",
+    "10. You are right where you need to be, safe and peaceful."
+];
+
+// Lógica de Kernel LocalStorage para índice secuencial sin repetición ni reinicios erróneos
+function obtenerSiguienteFraseSecuencial() {
+    let storageKey = "kernel_breath_index_" + currentLang;
+    let indexStr = localStorage.getItem(storageKey);
+    let currentIndex = indexStr ? parseInt(indexStr, 10) : 0;
+    
+    let banco = currentLang === 'es' ? frasesRelajacionES : frasesRelajacionEN;
+    
+    // Seguridad ante límites
+    if (isNaN(currentIndex) || currentIndex < 0 || currentIndex >= banco.length) {
+        currentIndex = 0;
+    }
+    
+    let fraseSeleccionada = banco[currentIndex];
+    
+    // Incrementar y dar la vuelta de manera estricta al terminar el último (bucle cíclico perfecto)
+    let siguienteIndex = (currentIndex + 1) % banco.length;
+    localStorage.setItem(storageKey, siguienteIndex.toString());
+    
+    return fraseSeleccionada;
+}
+
+function iniciarCicloRespiratorioDinamico() {
+    if (breathInterval) clearInterval(breathInterval);
+    
+    let spanTxt = document.getElementById('breath-txt');
+    
+    // Mostrar frase inmediata
+    let fraseActual = obtenerSiguienteFraseSecuencial();
+    spanTxt.innerText = fraseActual;
+    speak(fraseActual);
+    
+    // Rotar automáticamente cada 9 segundos mientras el usuario permanece en la pantalla de carga
+    breathInterval = setInterval(() => {
+        let proximaFrase = obtenerSiguienteFraseSecuencial();
+        spanTxt.innerText = proximaFrase;
+        speak(proximaFrase);
+    }, 9000);
+}
 
 const translations = {
     es: {
@@ -251,9 +298,7 @@ const translations = {
         procesar: "Verificar y Activar Copiloto",
         cancelar: "Cancelar",
         loadTitle: "Preparando tu Conexión con Google Fly",
-        loadDesc: "Iniciando escudo protector de tarifas en tiempo real...",
-        breath: "Respire",
-        loadSub: "Relájese por 30 segundos mientras acomodamos tu mapa de viaje limpio."
+        loadDesc: "Inhalando calma, liberando el estrés de ruta..."
     },
     en: {
         title: "TO THE SKY",
@@ -269,9 +314,7 @@ const translations = {
         procesar: "Verify & Activate Copilot",
         cancelar: "Cancel",
         loadTitle: "Preparing your Connection to Google Fly",
-        loadDesc: "Starting real-time fare protective shield...",
-        breath: "Breathe",
-        loadSub: "Relax for 30 seconds while we organize your clean route map."
+        loadDesc: "Inhaling calm, releasing route stress..."
     }
 };
 
@@ -292,16 +335,18 @@ function setLanguage(lang) {
     document.getElementById('btn-cancelar').innerText = t.cancelar;
     document.getElementById('load-title').innerText = t.loadTitle;
     document.getElementById('load-desc').innerText = t.loadDesc;
-    document.getElementById('breath-txt').innerText = t.breath;
-    document.getElementById('load-sub').innerText = t.loadSub;
 }
 
 function switchView(viewId) {
+    if (viewId !== 'view-loading' && breathInterval) {
+        clearInterval(breathInterval);
+        breathInterval = null;
+    }
     document.getElementById('view-home').classList.add('hidden');
     document.getElementById('view-form').classList.add('hidden');
     document.getElementById('view-loading').classList.add('hidden');
-    document.getElementById('view-lanzamiento').classList.add('hidden');
     document.getElementById('view-split').classList.add('hidden');
+    
     if (viewId === 'view-split') {
         document.getElementById('wrapper-setup-views').classList.add('hidden');
     } else {
@@ -332,12 +377,57 @@ function iniciarRutaViaje() {
 function speak(text) {
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
-        let textoLimpio = text.replace(/<\/?[^>]+(>|$)/g, "").replace(/•/g, "").replace(/➔/g, "hacia");
+        let textoLimpio = text.replace(/<\/?[^>]+(>|$)/g, "").replace(/•/g, "").replace(/➔/g, "hacia").replace(/^\d+\.\s*/, "");
         let utterance = new SpeechSynthesisUtterance(textoLimpio);
         utterance.lang = currentLang === 'es' ? 'es-ES' : 'en-US';
-        utterance.rate = 1.0;
+        utterance.rate = 0.95; // Velocidad pausada y relajante
         window.speechSynthesis.speak(utterance);
     }
+}
+
+async function procesarAsesoria() {
+    let org = document.getElementById('origen').value.trim();
+    let dest = document.getElementById('destino').value.trim();
+    let esc = document.getElementById('escala').value.trim();
+    let hrs = document.getElementById('horas_escala').value.trim();
+    let errBox = document.getElementById('error-box');
+
+    if (!org || !dest) {
+        let msg = currentLang === 'es' ? "¡Opa! Origen y destino son necesarios." : "Oops! Origin and destination are required.";
+        errBox.innerText = msg;
+        errBox.classList.remove('hidden');
+        speak(msg);
+        return;
+    }
+    errBox.classList.add('hidden');
+    
+    // Generar URL personalizada con los códigos IATA ingresados por el cliente
+    let origin_iata = org.toUpperCase().substring(0, 3);
+    let destination_iata = dest.toUpperCase().substring(0, 3);
+    urlGoogleFlightsGlobal = `https://www.google.com/travel/flights?q=flights%20from%20${origin_iata}%20to%20${destination_iata}`;
+
+    // Cambiar a la vista del círculo respiratorio
+    switchView('view-loading');
+    
+    // Iniciar el motor de frases antiagobio no repetitivas sincronizadas con LocalStorage
+    iniciarCicloRespiratorioDinamico();
+} 
+
+// CONEXIÓN MANUAL ESTRICTA: Solo ocurre si el usuario da clic físico en el botón debajo del círculo
+function conectarGoogleFlyManual() {
+    if (breathInterval) {
+        clearInterval(breathInterval);
+        breathInterval = null;
+    }
+    
+    // Transición a la consola flotante protectora
+    switchView('view-split');
+    
+    // Abrir ventana oficial con el link oficial de Google Fly
+    window.open(urlGoogleFlightsGlobal, '_blank');
+    
+    // Activar escucha continua de voz y chat asistente
+    iniciarReconocimientoVoz();
 }
 
 function iniciarReconocimientoVoz() {
@@ -379,7 +469,7 @@ function toggleMic() {
     } else {
         btn.innerText = currentLang === 'es' ? "🔇 Micrófono OFF" : "🔇 Mic Muted ON";
         btn.classList.add('muted');
-        status.innerText = currentLang === 'es' ? "Silenciado (puedes escribir)." : "Muted (you can type).";
+        status.innerText = currentLang === 'es' ? "Silenciado." : "Muted.";
         if(recognition) recognition.stop();
         speak(currentLang === 'es' ? "Micrófono apagado." : "Microphone off.");
     }
@@ -415,95 +505,15 @@ function procesarRespuestaAsistente(pregunta) {
     
     if (lower.includes("seguro") || lower.includes("proteccion") || lower.includes("insurance")) {
         respuesta = currentLang === 'es'
-            ? "El seguro de la aerolínea siempre es opcional. Si no lo deseas, selecciona 'no gracias' para evitar cobros extra en tu tarjeta."
-            : "Airline insurance is always optional. If you don't want it, select 'no thanks' to avoid extra charges on your card.";
+            ? "El seguro de la aerolínea siempre es opcional. Si no lo deseas, selecciona 'no gracias' para evitar cobros extra."
+            : "Airline insurance is always optional. If you don't want it, select 'no thanks' to avoid extra charges.";
     } else if (lower.includes("maleta") || lower.includes("equipaje") || lower.includes("bag")) {
         respuesta = currentLang === 'es'
-            ? "Verifica que el peso de tu maleta coincida con lo permitido para que no te cobren dinero de más al abordar el avión."
+            ? "Verifica que el peso de tu maleta coincida con lo permitido para que no te cobren dinero de más al abordar."
             : "Verify that your bag's weight matches what's allowed to avoid paying extra money at the boarding gate.";
-    } else if (lower.includes("escala") || lower.includes("conexion") || lower.includes("stop")) {
-        respuesta = currentLang === 'es'
-            ? "Quédate muy feliz y tranquilo. En la escala tus maletas se mueven solas de avión a avión, tú solo camina relajado a tu puerta."
-            : "Stay very happy and calm. During the stopover, your bags move automatically from plane to plane, you just walk relaxed to your gate.";
     }
     agregarMensajeChat("Copiloto: " + respuesta);
     speak(respuesta);
-}
-
-async function procesarAsesoria() {
-    let org = document.getElementById('origen').value.trim();
-    let dest = document.getElementById('destino').value.trim();
-    let esc = document.getElementById('escala').value.trim();
-    let hrs = document.getElementById('horas_escala').value.trim();
-    let errBox = document.getElementById('error-box');
-
-    if (!org || !dest) {
-        let msg = currentLang === 'es' ? "¡Opa! Te saltaste un cuadro vacío obligatorio. Origen y destino son necesarios." : "Oops! You skipped a mandatory blank box. Origin and destination are required.";
-        errBox.innerText = msg;
-        errBox.classList.remove('hidden');
-        speak(msg);
-        return;
-    }
-    errBox.classList.add('hidden');
-    switchView('view-loading');
-
-    setTimeout(async () => {
-        try {
-            let formData = new URLSearchParams();
-            formData.append('origen', org);
-            formData.append('escala', esc);
-            formData.append('destino', dest);
-            formData.append('horas_escala', hrs);
-            formData.append('lang', currentLang);
-
-            let response = await fetch('/traducir_itinerario', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: formData
-            });
-
-            if (response.ok) { 
-                let data = await response.json(); 
-                document.getElementById('itinerario-box').innerHTML = `<p>${data.itinerario_masticado}</p>`; 
-                document.getElementById('precio-box').innerText = data.precio_real || "Verificado conforme a normativa"; 
-                
-                // Guardar la URL oficial devuelta por el servidor
-                urlGoogleFlightsGlobal = data.url_directa;
-                
-                // Mostrar la vista con el botón manual de conexión
-                switchView('view-lanzamiento');
-                
-                agregarMensajeChat("Copiloto: " + data.itinerario_masticado);
-                
-                speak(currentLang === 'es' 
-                    ? "Itinerario verificado. Presiona el botón verde cuando desees conectar con Google Fly." 
-                    : "Itinerary verified. Press the green button when you want to connect with Google Fly.");
-            } else { 
-                switchView('view-form');
-                alert("Error en el servidor central de control."); 
-            } 
-        } catch (err) { 
-            switchView('view-form');
-            alert("Error de conexión de red."); 
-        } 
-        document.getElementById('autopropaganda-nino').innerText = currentLang === 'es' ? "Recomendación orientativa sujeta a revisión de los estándares operativos aplicables." : "Guidance recommendation subject to review of applicable operational standards."; 
-    }, 4000);
-} 
-
-// FUNCIÓN PARA EL CLIC MANUAL DEL CLIENTE CON EL URL DE GOOGLE FLY
-function conectarGoogleFlyManual() {
-    if (!urlGoogleFlightsGlobal) {
-        urlGoogleFlightsGlobal = "https://www.google.com/travel/flights";
-    }
-    
-    // Cambiar a la consola flotante de acompañamiento
-    switchView('view-split');
-    
-    // Abrir de forma controlada y manual el URL de Google Flights en una nueva pestaña o ventana
-    window.open(urlGoogleFlightsGlobal, '_blank');
-    
-    // Iniciar asistencia de voz y chat activo
-    iniciarReconocimientoVoz();
 }
 
 function handleClose() { 
@@ -518,50 +528,8 @@ function handleClose() {
 
 @app.get("/", response_class=HTMLResponse) 
 async def home(): 
-    return HTML_INDEX 
+    return HTML_INDEX
 
 @app.post("/traducir_itinerario") 
 async def traducir_itinerario(request: Request): 
-    try: 
-        form_data = await request.form() 
-        origen = form_data.get("origen", "").strip() 
-        destino = form_data.get("destino", "").strip() 
-        escala = form_data.get("escala", "").strip() 
-        horas_escala = form_data.get("horas_escala", "").strip() 
-        lang = form_data.get("lang", "es").strip() 
-
-        origin_iata = origen.upper()[:3] if origen else "MIA" 
-        destination_iata = destino.upper()[:3] if destination else "HAV" 
-        
-        precio_real_str = "$485.00 USD (Verificado en vivo)" 
-        
-        if lang == "es": 
-            texto_masticado = ( 
-                f"<strong>Asesoría de Ruta y Carga (Google Fly):</strong><br>" 
-                f"• Origen: {origin_iata} | Destino: {destination_iata}<br>" 
-                f"• {'Conexión en ' + escala.upper() + ' (' + (horas_escala if horas_escala else 'Tiempo estándar') + ')' if (escala and escala != '') else 'Vuelo directo'}<br>" 
-                f"• Ruta verificada para tu total protección y certeza.<br>" 
-                f"Presiona el botón de conexión cuando desees abrir Google Fly." 
-            ) 
-        else: 
-            texto_masticado = ( 
-                f"<strong>Route and Cargo Advisory (Google Fly):</strong><br>" 
-                f"• Origin: {origin_iata} | Destination: {destination_iata}<br>" 
-                f"• {'Connection in ' + escala.upper() + ' (' + (horas_escala if horas_escala else 'Standard time') + ')' if (escala and escala != '') else 'Direct flight'}<br>" 
-                f"• Route successfully verified for your complete protection.<br>" 
-                f"Press the connection button whenever you wish to open Google Fly." 
-            ) 
-            
-        url_google_flights = f"https://www.google.com/travel/flights?q=flights%20from%20{origin_iata}%20to%20{destination_iata}" 
-        
-        return JSONResponse(content={ 
-            "precio_real": precio_real_str, 
-            "itinerario_masticado": texto_masticado, 
-            "url_directa": url_google_flights 
-        }) 
-        
-    except Exception as e: 
-        return JSONResponse(status_code=500, content={ 
-            "precio_real": "Consulte tarifa en Google Fly", 
-            "itinerario_masticado": f"Error procesando la conexión con el servidor de aerolíneas: {str(e)}" 
-        })
+    return JSONResponse(content={"status": "ok"})
