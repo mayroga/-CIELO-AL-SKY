@@ -29,7 +29,7 @@
             background-color: #e2e6ea;
         }
         .main-container {
-            max-width: 600px;
+            max-width: 650px;
             margin: 0 auto;
             background: #fff;
             padding: 30px;
@@ -64,6 +64,14 @@
         }
         .scale-down {
             transform: scale(1.0);
+        }
+        .opcion-card {
+            background: #eef2f5;
+            border-left: 5px solid #004080;
+            padding: 12px;
+            margin: 10px 0;
+            text-align: left;
+            border-radius: 4px;
         }
     </style>
 </head>
@@ -121,10 +129,14 @@
             <button id="btn-conf-2" onclick="ejecutarEscudoEvidencia()">SÍ, ESTÁ PERFECTO</button>
         </div>
 
-        <!-- VISTA 6: TRADUCCIÓN Y PDF LOCAL -->
+        <!-- VISTA 6: TRADUCCIÓN Y OPCIONES DE VUELO + PDF LOCAL -->
         <div id="view-result" class="hidden">
-            <h2 id="result-title">Tu Itinerario Masticado</h2>
+            <h2 id="result-title">Tu Itinerario y Opciones de Vuelo</h2>
             <div id="itinerary-output" style="text-align: left; background: #eef2f5; padding: 15px; border-radius: 5px; margin-bottom: 20px;"></div>
+            
+            <h3 id="opciones-heading" style="color: #004080; margin-top: 20px;">Opciones de Viaje para Ti</h3>
+            <div id="opciones-vuelo-container" style="margin-bottom: 20px;"></div>
+
             <button id="btn-print" onclick="window.print()">Imprimir / Guardar PDF</button>
         </div>
     </div>
@@ -247,7 +259,6 @@
 
         // FASE 3: Escudo de Evidencia Local y Círculo Respiratorio (60s)
         async function ejecutarEscudoEvidencia() {
-            // Aviso de captura de pantalla local de seguridad
             let aviso = currentLang === 'es' ? 
                 "Por tu seguridad, hemos guardado una copia exacta de tus datos en la galería de fotos de tu teléfono." :
                 "For your security, we have saved an exact copy of your data in your phone's photo gallery.";
@@ -255,7 +266,6 @@
             alert(aviso);
             speak(aviso);
 
-            // Iniciar Círculo Respiratorio
             switchView('view-breath');
             iniciarCicloRespiratorio();
         }
@@ -274,7 +284,6 @@
                         phraseBox.innerText = frases[index];
                         speak(frases[index]);
 
-                        // Animación de expansión (4s) y contracción (4s)
                         circle.classList.add('scale-up');
                         setTimeout(() => {
                             circle.classList.remove('scale-up');
@@ -282,20 +291,19 @@
                         }, 4000);
 
                         index++;
-                        setTimeout(runBreath, 20000); // Siguiente frase cada 20 segundos (Total 60s)
+                        setTimeout(runBreath, 20000);
                     } else {
-                        // Al terminar los 60 segundos, cargar el itinerario masticado de ejemplo
-                        cargarItinerarioMasticado();
+                        cargarItinerarioYOpciones();
                     }
                 };
                 runBreath();
             } catch(e) {
-                cargarItinerarioMasticado();
+                cargarItinerarioYOpciones();
             }
         }
 
-        // FASE 4: Traducción de Itinerario y PDF Local
-        async function cargarItinerarioMasticado() {
+        // FASE 4: Traducción de Itinerario y Despliegue de las 4 Opciones de Vuelo
+        async function cargarItinerarioYOpciones() {
             let formData = new URLSearchParams();
             formData.append('origen', 'Miami');
             formData.append('escala', 'Panamá');
@@ -303,17 +311,33 @@
             formData.append('horas_escala', currentLang === 'es' ? 'dos horas y cuarenta minutos' : 'two hours and forty minutes');
             formData.append('lang', currentLang);
 
-            let res = await fetch('/traducir_itinerario', { method: 'POST', body: formData });
-            let data = await res.json();
+            let resItin = await fetch('/traducir_itinerario', { method: 'POST', body: formData });
+            let dataItin = await resItin.json();
 
-            let html = `
-                <p><strong>1.</strong> ${data.paso_1}</p>
-                <p><strong>2.</strong> ${data.paso_2}</p>
-                <p><strong>3.</strong> ${data.paso_3}</p>
+            let htmlItin = `
+                <p><strong>1.</strong> ${dataItin.paso_1}</p>
+                <p><strong>2.</strong> ${dataItin.paso_2}</p>
+                <p><strong>3.</strong> ${dataItin.paso_3}</p>
             `;
-            document.getElementById('itinerary-output').innerHTML = html;
+            document.getElementById('itinerary-output').innerHTML = htmlItin;
+
+            // Obtener las 4 opciones de vuelo estructuradas como niño de 8 años
+            let resOpciones = await fetch(`/opciones_vuelo?lang=${currentLang}`);
+            let dataOpciones = await resOpciones.json();
+
+            let htmlOpciones = "";
+            dataOpciones.opciones.forEach(op => {
+                htmlOpciones += `
+                    <div class="opcion-card">
+                        <strong>${op.titulo}</strong>
+                        <p style="margin: 5px 0 0 0; font-size: 14px;">${op.descripcion}</p>
+                    </div>
+                `;
+            });
+            document.getElementById('opciones-vuelo-container').innerHTML = htmlOpciones;
+
             switchView('view-result');
-            speak(currentLang === 'es' ? "Tu itinerario ha sido traducido con éxito." : "Your itinerary has been successfully translated.");
+            speak(currentLang === 'es' ? "Tu itinerario y opciones han sido cargados con éxito." : "Your itinerary and options have been successfully loaded.");
         }
 
         function handleClose() {
