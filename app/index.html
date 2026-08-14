@@ -412,22 +412,29 @@ function procesarRespuestaAsistente(pregunta) {
 }
 <script>
 function procesarAsesoriaDirecta() {
-    let org = document.getElementById('origen').value.trim();
-    let dest = document.getElementById('destino').value.trim();
-    let esc = document.getElementById('escala').value.trim();
-    let hrs = document.getElementById('horas_escala').value.trim();
+    let orgField = document.getElementById('origen');
+    let destField = document.getElementById('destino');
+    let escField = document.getElementById('escala');
+    let hrsField = document.getElementById('horas_escala');
     let errBox = document.getElementById('error-box');
 
-    if (!org || !dest) {
+    if (!orgField || !destField || !orgField.value.trim() || !destField.value.trim()) {
         let msg = currentLang === 'es' ? "¡Opa! Te saltaste un cuadro vacío obligatorio. Origen y destino son necesarios." : "Oops! You skipped a mandatory blank box. Origin and destination are required.";
-        errBox.innerText = msg;
-        errBox.classList.remove('hidden');
+        if (errBox) {
+            errBox.innerText = msg;
+            errBox.classList.remove('hidden');
+        }
         speak(msg);
         return;
     }
-    errBox.classList.add('hidden');
+    
+    if (errBox) errBox.classList.add('hidden');
     switchView('view-loading');
 
+    let org = orgField.value.trim();
+    let dest = destField.value.trim();
+    let esc = escField ? escField.value.trim() : "";
+    
     let originIata = org.toUpperCase().slice(0, 3);
     let destIata = dest.toUpperCase().slice(0, 3);
     urlGoogleFlightsGlobal = `https://google.com{originIata}+to+${destIata}`;
@@ -436,16 +443,17 @@ function procesarAsesoriaDirecta() {
         ? `<strong>Asesoría de Ruta:</strong><br>• Origen: ${originIata} | Destino: ${destIata}<br>• ${esc ? 'Escala en ' + esc.toUpperCase() : 'Vuelo directo'}<br>Ruta configurada con éxito.`
         : `<strong>Route Advisory:</strong><br>• Origin: ${originIata} | Destination: ${destIata}<br>• ${esc ? 'Stopover in ' + esc.toUpperCase() : 'Direct flight'}<br>Route successfully configured.`;
 
-    // Simular los 30 segundos de relajación respiratoria antes de activar el botón físico anti-bloqueo
     let secondsLeft = 30;
     let subText = document.getElementById('load-sub');
     
     let timerInterval = setInterval(() => {
         secondsLeft--;
-        if (currentLang === 'es') {
-            subText.innerText = `Preparando entorno seguro... ${secondsLeft}s`;
-        } else {
-            subText.innerText = `Preparing secure environment... ${secondsLeft}s`;
+        if (subText) {
+            if (currentLang === 'es') {
+                subText.innerText = `Preparando entorno seguro... ${secondsLeft}s`;
+            } else {
+                subText.innerText = `Preparing secure environment... ${secondsLeft}s`;
+            }
         }
         
         if (secondsLeft <= 0) {
