@@ -4,39 +4,133 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AL CIELO</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+        }
+        #language-controls {
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+        }
+        button:hover {
+            background-color: #e2e6ea;
+        }
+        .main-container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #004080;
+        }
+    </style>
 </head>
 <body>
-    <div id="language-controls">
-        <button onclick="setLanguage('es')">Español</button>
-        <button onclick="setLanguage('en')">English</button>
-    </div>
+    <div class="main-container">
+        <div id="language-controls">
+            <button onclick="setLanguage('es')">Español</button>
+            <button onclick="setLanguage('en')">English</button>
+        </div>
 
-    <h1 id="title">AL CIELO</h1>
-    <button id="btn-entrar" onclick="speak(this.innerText)">Entrar</button>
-    <button id="btn-cerrar" onclick="speak(this.innerText)">Cerrar</button>
+        <h1 id="title">AL CIELO</h1>
+        <p id="subtitle">Sistema Híbrido de Asistencia al Viajero</p>
+
+        <div style="margin-top: 30px;">
+            <button id="btn-entrar" onclick="handleEnter()">Entrar</button>
+            <button id="btn-cerrar" onclick="handleClose()">Cerrar</button>
+        </div>
+    </div>
 
     <script>
         let currentLang = 'es';
 
         const content = {
-            es: { title: "AL CIELO", enter: "Entrar", close: "Cerrar" },
-            en: { title: "AL CIELO", enter: "Enter", close: "Close" }
+            es: {
+                title: "AL CIELO",
+                subtitle: "Sistema Híbrido de Asistencia al Viajero",
+                enter: "Entrar",
+                close: "Cerrar",
+                alertClose: "¿Seguro que deseas cerrar tu sesión ahora?",
+                sessionEnd: "Tu sesión de seguridad ha terminado. Los datos han sido borrados."
+            },
+            en: {
+                title: "AL CIELO",
+                subtitle: "Hybrid Traveler Assistance System",
+                enter: "Enter",
+                close: "Close",
+                alertClose: "Are you sure you want to close your session now?",
+                sessionEnd: "Your security session has ended. Data has been cleared."
+            }
         };
 
         function setLanguage(lang) {
             currentLang = lang;
             document.documentElement.lang = lang;
             document.getElementById('title').innerText = content[lang].title;
+            document.getElementById('subtitle').innerText = content[lang].subtitle;
             document.getElementById('btn-entrar').innerText = content[lang].enter;
             document.getElementById('btn-cerrar').innerText = content[lang].close;
         }
 
         // Función de voz nativa (Web Speech API)
         function speak(text) {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = currentLang === 'es' ? 'es-ES' : 'en-US';
-            window.speechSynthesis.speak(utterance);
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = currentLang === 'es' ? 'es-ES' : 'en-US';
+                window.speechSynthesis.speak(utterance);
+            }
         }
+
+        function handleEnter() {
+            speak(document.getElementById('btn-entrar').innerText);
+            // Lógica de inicio de sesión y transición al WebView / renderizado
+        }
+
+        function handleClose() {
+            speak(document.getElementById('btn-cerrar').innerText);
+            if (confirm(content[currentLang].alertClose)) {
+                fetch('/destroy_session', { method: 'POST' })
+                    .then(() => {
+                        window.location.href = "about:blank";
+                        window.close();
+                    })
+                    .catch(() => {
+                        window.close();
+                    });
+            }
+        }
+
+        // Configuración del Ciclo de Vida: 8 minutos estritos (480,000 milisegundos)
+        const SESSION_DURATION = 8 * 60 * 1000;
+
+        function startTimer() {
+            setTimeout(() => {
+                alert(content[currentLang].sessionEnd);
+                fetch('/destroy_session', { method: 'POST' }).finally(() => {
+                    window.location.href = "about:blank";
+                    window.close();
+                });
+            }, SESSION_DURATION);
+        }
+
+        // Iniciar el temporizador automáticamente al cargar la interfaz
+        window.onload = startTimer;
     </script>
 </body>
 </html>
