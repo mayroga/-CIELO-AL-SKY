@@ -1,8 +1,6 @@
 import os
-from fastapi import FastAPI, Form, HTTPException, BackgroundTasks, Request
-from fastapi.responses import JSONResponse, HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi import FastAPI, Form, HTTPException, BackgroundTasks
+from fastapi.responses import JSONResponse, FileResponse
 from app.kernel import AsesorKernel
 
 # Inicialización de la aplicación FastAPI
@@ -11,20 +9,19 @@ app = FastAPI(title="AL CIELO - API Core")
 # Instancia global del motor inteligente de asistencia
 kernel = AsesorKernel()
 
-# CONFIGURACIÓN DE JINJA2 PARA RENDERIZAR TU INDEX.HTML
-# Busca los archivos HTML dentro de la carpeta llamada 'app'
-templates = Jinja2Templates(directory="app")
-
 # =========================================================================
-# 🚀 RUTA RAÍZ: SOLUCIÓN AL ERROR 404 NOT FOUND
+# RUTA RAÍZ: DEVUELVE TU INDEX.HTML DIRECTAMENTE SIN ERRORES DE JINJA2
 # =========================================================================
-@app.get("/", response_class=HTMLResponse)
-async def leer_raiz(request: Request):
+@app.get("/")
+async def leer_raiz():
     """
-    Este endpoint intercepta la entrada del usuario a https://onrender.com
-    y le sirve de inmediato el archivo index.html usando Jinja2, eliminando la pantalla blanca.
+    Sirve el archivo index.html directamente desde la carpeta app de manera limpia,
+    sin requerir configuraciones adicionales de plantillas.
     """
-    return templates.TemplateResponse("index.html", {"request": request})
+    archivo_html = os.path.join("app", "index.html")
+    if os.path.exists(archivo_html):
+        return FileResponse(archivo_html)
+    return JSONResponse(content={"detail": "Not Found"}, status_code=404)
 
 # =========================================================================
 # ENDPOINT 1: VALIDACIÓN EXPLICATIVA EN TIEMPO REAL
@@ -41,7 +38,7 @@ async def validar_datos_endpoint(
     return JSONResponse(content=resultado, status_code=200)
 
 # =========================================================================
-# ENDPOINT 2: TRADUCCIÓN DE ITINERARIOS NO DIRECTOS CON GEMINI
+# ENDPOINT 2: TRADUCCIÓN DE ITINERARIOS CON GEMINI
 # =========================================================================
 @app.post("/traducir_itinerario")
 async def traducir_itinerario_endpoint(
@@ -55,7 +52,7 @@ async def traducir_itinerario_endpoint(
     return JSONResponse(content=resultado, status_code=200)
 
 # =========================================================================
-# ENDPOINT 3: VIGILANCIA DIARIA Y SEMANAL (TRIGGER DE LIMPIEZA)
+# ENDPOINT 3: VIGILANCIA DIARIA Y SEMANAL
 # =========================================================================
 @app.post("/sistema/vigilancia")
 async def ejecutar_vigilancia_endpoint(background_tasks: BackgroundTasks):
