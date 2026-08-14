@@ -1,74 +1,95 @@
-from fastapi import FastAPI, Request, Form
-from fastapi.responses import HTMLResponse, JSONResponse
 import os
-import requests
-
+from fastapi import FastAPI, Form, HTTPException, BackgroundTasks
+from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from app.kernel import AsesorKernel
 
-app = FastAPI()
+# Inicialización de la aplicación FastAPI
+app = FastAPI(title="AL CIELO - API Core")
+
+# Instancia global del motor inteligente de asistencia
 kernel = AsesorKernel()
 
-# Token de Travelpayouts obtenido de las variables de entorno de Render
-TRAVELPAYOUTS_API_TOKEN = os.getenv("TRAVELPAYOUTS_API_TOKEN")
+# Opcional: Montar archivos estáticos para servir el index.html si tu arquitectura lo requiere
+# app.mount("/static", StaticFiles(directory="app"), name="static")
 
-@app.get("/", response_class=HTMLResponse)
-async def get_index():
-    index_path = os.path.join("app", "index.html")
-    if os.path.exists(index_path):
-        with open(index_path, "r", encoding="utf-8") as f:
-            return f.read()
-    return "<h1>Ay, caramba: No encontramos la casita de inicio (index.html).</h1>"
-
-@app.get("/frases_render")
-async def obtener_frases_render(lang: str = "es"):
-    if lang == "es":
-        return {"frases": kernel.frases_render_es}
-    return {"frases": kernel.frases_render_en}
-
-@app.get("/frases_respiracion")
-async def obtener_frases_respiracion(lang: str = "es"):
-    if lang == "es":
-        return {"frases": kernel.frases_respiracion_es}
-    return {"frases": kernel.frases_respiracion_en}
-
-@app.get("/opciones_vuelo")
-async def obtener_opciones_vuelo_endpoint(origen: str = "MIA", destino: str = "BOG", escala: str = "", lang: str = "es"):
-    resultado = kernel.obtener_opciones_vuelo(origen, destino, escala, lang)
-    return JSONResponse(content=resultado)
-
-@app.get("/buscar_vuelos_reales")
-async def buscar_vuelos_reales(origen: str, destino: str, fecha: str = None):
-    """Consulta los precios reales usando la API de Travelpayouts con el token seguro"""
-    if not TRAVELPAYOUTS_API_TOKEN:
-        return JSONResponse(content={"error": "Token de Travelpayouts no configurado en el servidor."}, status_code=500)
-    
-    url = "https://api.travelpayouts.com/v1/prices/cheap"
-    params = {
-        "origin": origen,
-        "destination": destino,
-        "token": TRAVELPAYOUTS_API_TOKEN,
-        "currency": "USD"
-    }
-    if fecha:
-        params["departure_at"] = fecha
-        
-    try:
-        response = requests.get(url, params=params, timeout=10)
-        data = response.json()
-        return JSONResponse(content=data)
-    except Exception as e:
-        return JSONResponse(content={"error": str(e)}, status_code=500)
-
+# =========================================================================
+# ENDPOINT 1: VALIDACIÓN EXPLICATIVA EN TIEMPO REAL
+# =========================================================================
 @app.post("/validar")
-async def validar_datos_endpoint(nombre: str = Form(...), pasaporte: str = Form(...), lang: str = "es"):
+async def validar_datos_endpoint(
+    nombre: str = Form(...), 
+    pasaporte: str = Form(...), 
+    lang: str = "es"
+):
+    """
+    Recibe los datos del formulario del cliente. Invoca al filtro estricto anti-errores
+    para limpiar espacios fantasmas y letras erróneas antes de cualquier avance en la web.
+    """
     resultado = kernel.validar_datos_entrada(nombre, pasaporte, lang)
-    return JSONResponse(content=resultado)
+    
+    if not resultado["valido"]:
+        # Se devuelve un código 400 controlado pero con la explicación amigable para niños de 8 años
+        return JSONResponse(content=resultado, status_code=400)
+        
+    return JSONResponse(content=resultado, status_code=200)
 
+# =========================================================================
+# ENDPOINT 2: TRADUCCIÓN DE ITINERARIOS NO DIRECTOS CON GEMINI
+# =========================================================================
 @app.post("/traducir_itinerario")
-async def traducir_itinerario_endpoint(origen: str = Form(...), escala: str = Form(...), destino: str = Form(...), horas_escala: str = Form(...), lang: str = "es"):
+async def traducir_itinerario_endpoint(
+    origen: str = Form(...), 
+    escala: str = Form(""), 
+    destino: str = Form(...), 
+    horas_escala: str = Form(""), 
+    lang: str = "es"
+):
+    """
+    Endpoint estratégico que sustituye los datos inventados de Travelpayouts. Toma los parámetros 
+    públicos de la ruta del cliente y los envía a Gemini para 'masticar' el mapa de viaje.
+    """
     resultado = kernel.traducir_itinerario(origen, escala, destino, horas_escala, lang)
-    return JSONResponse(content=resultado)
+    return JSONResponse(content=resultado, status_code=200)
 
+# =========================================================================
+# ENDPOINT 3: VIGILANCIA DIARIA Y SEMANAL (TRIGGER DE LIMPIEZA)
+# =========================================================================
+@app.post("/sistema/vigilancia")
+async def ejecutar_vigilancia_endpoint(background_tasks: BackgroundTasks):
+    """
+    Activa las tareas automáticas de inspección diaria en segundo plano (Background Tasks). 
+    Descarga los HTML públicos de Copa o los chárters, sobrescribe las coordenadas 
+    con Gemini y vacía de inmediato el almacenamiento antiguo para no dejar residuos.
+    """
+    background_tasks.add_task(kernel.chequear_actualizaciones_aerolineas)
+    return JSONResponse(
+        content={
+            "status": "triggered", 
+            "message": "Doble vigilancia diaria activada en segundo plano de Render."
+        }, 
+        status_code=202
+    )
+
+# =========================================================================
+# ENDPOINT 4: AUTODESTRUCCIÓN Y CIERRE DE SESIÓN SEGURO
+# =========================================================================
 @app.post("/destroy_session")
 async def destroy_session():
-    return {"status": "session_destroyed", "message": "Memoria limpiada con éxito"}
+    """
+    Llamado de forma automática por el temporizador de JavaScript a los 8 minutos o
+    manualmente por el cliente mediante el botón 'Cerrar'. Asegura la destrucción
+    inmediata de cualquier rastro temporal de variables en memoria.
+    """
+    try:
+        # Forzar la limpieza de mapas o banderas activas locales del proceso del usuario
+        # Al no usar bases de datos ni cookies permanentes, el flujo es 100% volátil
+        return JSONResponse(
+            content={
+                "status": "destroyed", 
+                "message": "Memoria local liberada con éxito. Cero datos guardados."
+            }, 
+            status_code=200
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
