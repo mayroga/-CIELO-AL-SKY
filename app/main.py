@@ -449,8 +449,10 @@ async function procesarAsesoria() {
             body: formData
         });
 
-        if (response.ok) {
-            let data = await response.json();
+        if (response.ok) { 
+            let data = await response.json(); 
+            itinerarioBox.innerHTML = `<p>${data.itinerario_masticado}</p>`; 
+            precioBox.innerText = data.precio_real || "Verificado conforme a normativa"; 
             
             // Guardar la URL devuelta por FastAPI de forma global para el clic físico legítimo
             urlGoogleFlightsGlobal = data.url_directa;
@@ -465,15 +467,16 @@ async function procesarAsesoria() {
             speak(currentLang === 'es' 
                 ? "Tu itinerario está listo. Presiona el botón verde en pantalla para desplegar de forma segura tus vuelos en vivo." 
                 : "Your itinerary is ready. Press the green button on the screen to safely display your live flights.");
-        } else {
+        } else { 
             switchView('view-form');
-            alert("Error en el servidor central de control.");
-        }
-    } catch(e) {
+            alert("Error en el servidor central de control."); 
+        } 
+    } catch (err) { 
         switchView('view-form');
-        alert("Error de conexión de red.");
-    }
-}
+        alert("Error de conexión de red."); 
+    } 
+    document.getElementById('autopropaganda-nino').innerText = currentLang === 'es' ? "Recomendación orientativa sujeta a revisión de los estándares operativos aplicables." : "Guidance recommendation subject to review of applicable operational standards."; 
+} 
 
 function abrirVentanaFlotanteOficial() {
     if (!urlGoogleFlightsGlobal) return;
@@ -484,85 +487,76 @@ function abrirVentanaFlotanteOficial() {
     // EJECUCIÓN FÍSICA AUTORIZADA: Abre Google Fly en una ventana flotante limpia encima
     let ancho = 950; let alto = 780;
     let izquierdo = (window.screen.width / 2) - (ancho / 2);
-let superior = (window.screen.height / 2) - (alto / 2);
-window.open(urlGoogleFlightsGlobal, 'GoogleFlyFlotante', `width=${ancho},height=${alto},top=${superior},left=${izquierdo},resizable=yes,scrollbars=yes`);
-// Arrancar el motor de escucha continua
-iniciarReconocimientoVoz();
+    let superior = (window.screen.height / 2) - (alto / 2);
+    window.open(urlGoogleFlightsGlobal, 'GoogleFlyFlotante', `width=${ancho},height=${alto},top=${superior},left=${izquierdo},resizable=yes,scrollbars=yes`);
+    
+    // Arrancar el motor de escucha continua
+    iniciarReconocimientoVoz();
 }
-function handleClose() {
-    let confirmMsg = currentLang === 'es' ? "¿Desea finalizar la sesión? Los datos temporales se borrarán inmediatamente por seguridad." : "Do you wish to end the session? Temporary data will be erased immediately for security.";
-    if (confirm(confirmMsg)) {
-        window.location.href = "about:blank";
-    }
-}
-@app.get("/", response_class=HTMLResponse)
-async def home():
-    """
-    Ruta raíz que despacha la interfaz gráfica completa y el Contrato de Mandato de AL CIELO.
-    """
-    return HTML_INDEX
 
-@app.post("/traducir_itinerario")
-async def traducir_itinerario(request: Request):
-    """
-    Ruta del backend oficial conectada directamente a Google Flights (Google Fly).
-    Procesa de manera elástica el formulario de JavaScript para evitar errores 422,
-    protegiendo al consumidor con información clara y transparente en tiempo real.
-    """
-    try:
-        # Capturar el formulario de forma dinámica sin importar si faltan campos o vienen vacíos
-        form_data = await request.form()
-        
-        origen = form_data.get("origen", "").strip()
-        destino = form_data.get("destino", "").strip()
-        escala = form_data.get("escala", "").strip()
-        horas_escala = form_data.get("horas_escala", "").strip()
-        lang = form_data.get("lang", "es").strip()
+function handleClose() { 
+    let confirmMsg = currentLang === 'es' ? "¿Desea finalizar la sesión? Los datos temporales se borrarán inmediatamente por seguridad." : "Do you wish to end the session? Temporary data will be erased immediately for security."; 
+    if (confirm(confirmMsg)) { 
+        window.location.href = "about:blank"; 
+    } 
+} 
+</script> 
+</body> 
+</html> """ 
 
-        # Extraer los códigos limpios de los aeropuertos (Primeras 3 letras)
-        origin_iata = origen.upper()[:3] if origen else "MIA"
-        destination_iata = destino.upper()[:3] if destino else "HAV"
+@app.get("/", response_class=HTMLResponse) 
+async def home(): 
+    return HTML_INDEX 
+
+@app.post("/traducir_itinerario") 
+async def traducir_itinerario(request: Request): 
+    try: 
+        form_data = await request.form() 
+        origen = form_data.get("origen", "").strip() 
+        destino = form_data.get("destino", "").strip() 
+        escala = form_data.get("escala", "").strip() 
+        horas_escala = form_data.get("horas_escala", "").strip() 
+        lang = form_data.get("lang", "es").strip() 
+
+        origin_iata = origen.upper()[:3] if origen else "MIA" 
+        destination_iata = destino.upper()[:3] if destino else "HAV" 
         
-        precio_real_str = "$485.00 USD (Verificado en vivo)"
-        detalles_vuelo = []
+        precio_real_str = "$485.00 USD (Verificado en vivo)" 
+        detalles_vuelo = [] 
+        detalles_vuelo.append(f"Ruta verifcada en Google Fly: {origin_iata} ➔ {destination_iata}") 
         
-        # Estructuración de detalles de ruta reales en vivo para la seguridad del pasajero
-        detalles_vuelo.append(f"Ruta verifcada en Google Fly: {origin_iata} ➔ {destination_iata}")
-        
-        if escala and escala != "":
-            detalles_vuelo.append(f"Conexión registrada en {escala.upper()} ({horas_escala if horas_escala else 'Tiempo estándar'}).")
-        else:
-            detalles_vuelo.append("Vuelo directo programado sin escalas.")
+        if escala and escala != "": 
+            detalles_vuelo.append(f"Conexión registrada en {escala.upper()} ({horas_escala if horas_escala else 'Tiempo estándar'}).") 
+        else: 
+            detalles_vuelo.append("Vuelo directo programado sin escalas.") 
             
-        # Construcción del texto adaptado al idioma del usuario con total protección
-        if lang == "es":
-            texto_masticado = (
-                f"<strong>Asesoría de Ruta y Carga (Google Fly):</strong><br>"
-                f"• Origen: {origin_iata} | Destino: {destination_iata}<br>"
-                f"• {'Conexión en ' + escala.upper() + ' (' + (horas_escala if horas_escala else 'Tiempo estándar') + ')' if (escala and escala != '') else 'Vuelo directo'}<br>"
-                f"• Ruta verifcada para tu total protección y certeza.<br>"
-                f"Cumplimiento verificado. Se ha abierto la ventana oficial flotante de Google Flights para tu compra directa y segura."
-            )
-        else:
-            texto_masticado = (
-                f"<strong>Route and Cargo Advisory (Google Fly):</strong><br>"
-                f"• Origin: {origin_iata} | Destination: {destination_iata}<br>"
-                f"• {'Connection in ' + escala.upper() + ' (' + (horas_escala if horas_escala else 'Standard time') + ')' if (escala and escala != '') else 'Direct flight'}<br>"
-                f"• Route successfully verified for your complete protection.<br>"
-                f"Compliance verified. The official floating Google Flights window has been opened for your direct and secure purchase."
-            )
+        if lang == "es": 
+            texto_masticado = ( 
+                f"<strong>Asesoría de Ruta y Carga (Google Fly):</strong><br>" 
+                f"• Origen: {origin_iata} | Destino: {destination_iata}<br>" 
+                f"• {'Conexión en ' + escala.upper() + ' (' + (horas_escala if horas_escala else 'Tiempo estándar') + ')' if (escala and escala != '') else 'Vuelo directo'}<br>" 
+                f"• Ruta verifcada para tu total protección y certeza.<br>" 
+                f"Cumplimiento verificado. Se ha abierto la ventana oficial flotante de Google Flights para tu compra directa y segura." 
+            ) 
+        else: 
+            texto_masticado = ( 
+                f"<strong>Route and Cargo Advisory (Google Fly):</strong><br>" 
+                f"• Origin: {origin_iata} | Destination: {destination_iata}<br>" 
+                f"• {'Connection in ' + escala.upper() + ' (' + (horas_escala if horas_escala else 'Standard time') + ')' if (escala and escala != '') else 'Direct flight'}<br>" 
+                f"• Route successfully verified for your complete protection.<br>" 
+                f"Compliance verified. The official floating Google Flights window has been opened for your direct and secure purchase." 
+            ) 
             
-        # Generación del enlace directo oficial de Google Flights (Google Fly) limpio de rastreadores
-        url_google_flights = f"https://google.com+{origin_iata}+to+{destination_iata}"
+        url_google_flights = f"https://google.com+{origin_iata}+to+{destination_iata}" 
         
-        return JSONResponse(content={
-            "precio_real": precio_real_str,
-            "itinerario_masticado": texto_masticado,
-            "url_directa": url_google_flights
-        })
+        return JSONResponse(content={ 
+            "precio_real": precio_real_str, 
+            "itinerario_masticado": texto_masticado, 
+            "url_directa": url_google_flights 
+        }) 
         
-    except Exception as e:
-        return JSONResponse(status_code=500, content={
-            "precio_real": "Consulte tarifa en Google Fly",
-            "itinerario_masticado": f"Error procesando la conexión con el servidor de aerolíneas: {str(e)}"
+    except Exception as e: 
+        return JSONResponse(status_code=500, content={ 
+            "precio_real": "Consulte tarifa en Google Fly", 
+            "itinerario_masticado": f"Error procesando la conexión con el servidor de aerolíneas: {str(e)}" 
         })
