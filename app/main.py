@@ -1,11 +1,15 @@
 from fastapi import FastAPI, Request, Form
 from fastapi.responses import HTMLResponse, JSONResponse
 import os
+import requests
 
 from app.kernel import AsesorKernel
 
 app = FastAPI()
 kernel = AsesorKernel()
+
+# Token de Travelpayouts obtenido de las variables de entorno de Render
+TRAVELPAYOUTS_API_TOKEN = os.getenv("TRAVELPAYOUTS_API_TOKEN")
 
 @app.get("/", response_class=HTMLResponse)
 async def get_index():
@@ -28,9 +32,32 @@ async def obtener_frases_respiracion(lang: str = "es"):
     return {"frases": kernel.frases_respiracion_en}
 
 @app.get("/opciones_vuelo")
-async def obtener_opciones_vuelo_endpoint(origen: str = "Miami", destino: str = "La Habana", escala: str = "", lang: str = "es"):
-    resultado = kernel.obtener_opciones_vuelo(origen, destino, escala, lang)
+async def obtener_opciones_vuelo_endpoint(lang: str = "es"):
+    resultado = kernel.obtener_opciones_vuelo(lang)
     return JSONResponse(content=resultado)
+
+@app.get("/buscar_vuelos_reales")
+async def buscar_vuelos_reales(origen: str, destino: str, fecha: str = None):
+    """Consulta los precios reales usando la API de Travelpayouts con el token seguro"""
+    if not TRAVELPAYOUTS_API_TOKEN:
+        return JSONResponse(content={"error": "Token de Travelpayouts no configurado en el servidor."}, status_code=500)
+    
+    url = "https://api.travelpayouts.com/v1/prices/cheap"
+    params = {
+        "origin": origen,
+        "destination": destino,
+        "token": TRAVELPAYOUTS_API_TOKEN,
+        "currency": "USD"
+    }
+    if fecha:
+        params["departure_at"] = fecha
+        
+    try:
+        response = requests.get(url, params=params, timeout=10)
+        data = response.json()
+        return JSONResponse(content=data)
+    except Exception as e:
+        return JSONResponse(content={"error": str(e)}, status_code=500)
 
 @app.post("/validar")
 async def validar_datos_endpoint(nombre: str = Form(...), pasaporte: str = Form(...), lang: str = "es"):
@@ -44,5 +71,4 @@ async def traducir_itinerario_endpoint(origen: str = Form(...), escala: str = Fo
 
 @app.post("/destroy_session")
 async def destroy_session():
-    kernel.session_active = False
     return {"status": "session_destroyed", "message": "Memoria limpiada con éxito"}
