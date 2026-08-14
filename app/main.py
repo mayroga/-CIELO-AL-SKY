@@ -9,7 +9,7 @@ HTML_INDEX = """<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AL CIELO</title>
+    <title>AL CIELO - Asistencia de Viaje Profesional</title>
     <style>
         body, html {
             margin: 0; padding: 0; height: 100%;
@@ -55,6 +55,7 @@ HTML_INDEX = """<!DOCTYPE html>
             border: 1px solid #ccc;
             outline: none;
         }
+        input:focus, select:focus { border-color: #004080; box-shadow: 0 0 5px rgba(0,64,128,0.2); }
         .error-message {
             color: #dc3545;
             font-weight: bold;
@@ -82,26 +83,6 @@ HTML_INDEX = """<!DOCTYPE html>
             0% { transform: scale(1.0); background-color: #a8dadc; }
             50% { transform: scale(1.3); background-color: #457b9d; }
             100% { transform: scale(1.0); background-color: #a8dadc; }
-        }
-        /* Widget flotante ultra discreto en segundo plano para Google Flights */
-        #floating-voice-widget {
-            position: fixed;
-            bottom: 15px;
-            right: 15px;
-            background: #004080;
-            color: white;
-            padding: 10px 15px;
-            border-radius: 30px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            z-index: 999999;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-family: sans-serif;
-        }
-        #floating-voice-widget.paused {
-            background: #dc3545;
         }
     </style>
 </head>
@@ -139,52 +120,82 @@ HTML_INDEX = """<!DOCTYPE html>
         </div>
     </div>
 
-    <!-- VISTA 2: FORMULARIO DE DATOS -->
+    <!-- VISTA 2: FORMULARIO COMPLETO PARA PRELLENAR BÚSQUEDA -->
     <div id="view-form" class="hidden">
         <h2 id="form-title">Datos Completos para Automatización de Vuelo</h2>
-        <p id="form-desc" style="color: #666; font-size: 13px;">Llene estos campos para configurar su búsqueda en Google de manera limpia y sin interferencias.</p>
+        <p id="form-desc" style="color: #666; font-size: 13px;">Llene estos campos detallados para configurar su búsqueda con total precisión, certeza y seguridad antes de abrir Google Flights.</p>
         
         <div style="text-align: left; display: inline-block; width: 100%; font-size: 13px;">
             <div style="display: flex; gap: 10px;">
-                <div style="flex: 1;"><label style="font-weight: bold; color: #004080;">Origen (IATA):</label><input type="text" id="origen" placeholder="Ej: MIA"></div>
-                <div style="flex: 1;"><label style="font-weight: bold; color: #004080;">Destino (IATA):</label><input type="text" id="destino" placeholder="Ej: MAD"></div>
+                <div style="flex: 1;"><label id="lbl-origen" style="font-weight: bold; color: #004080;">Origen (IATA):</label><input type="text" id="origen" placeholder="Ej: MIA"></div>
+                <div style="flex: 1;"><label id="lbl-destino" style="font-weight: bold; color: #004080;">Destino (IATA):</label><input type="text" id="destino" placeholder="Ej: MAD"></div>
             </div>
 
             <div style="display: flex; gap: 10px; margin-top: 8px;">
-                <div style="flex: 1;"><label style="font-weight: bold; color: #004080;">Fecha Salida:</label><input type="date" id="fecha_salida"></div>
-                <div style="flex: 1;"><label style="font-weight: bold; color: #004080;">Fecha Regreso:</label><input type="date" id="fecha_regreso"></div>
+                <div style="flex: 1;"><label id="lbl-salida" style="font-weight: bold; color: #004080;">Fecha Salida:</label><input type="date" id="fecha_salida"></div>
+                <div style="flex: 1;"><label id="lbl-regreso" style="font-weight: bold; color: #004080;">Fecha Regreso:</label><input type="date" id="fecha_regreso"></div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 8px;">
+                <div style="flex: 1;">
+                    <label id="lbl-tipo" style="font-weight: bold; color: #004080;">Tipo de Viaje:</label>
+                    <select id="tipo_viaje">
+                        <option value="1">Ida y Vuelta</option>
+                        <option value="2">Ida Sola</option>
+                        <option value="3">Multiciudad</option>
+                    </select>
+                </div>
+                <div style="flex: 1;">
+                    <label id="lbl-clase" style="font-weight: bold; color: #004080;">Clase de Asiento:</label>
+                    <select id="clase_asiento">
+                        <option value="economy">Económica</option>
+                        <option value="premium">Económica Premium</option>
+                        <option value="business">Ejecutiva (Business)</option>
+                        <option value="first">Primera Clase</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 8px;">
+                <div style="flex: 1;"><label id="lbl-pasajeros" style="font-weight: bold; color: #004080;">Pasajeros Adultos:</label><input type="number" id="pasajeros" value="1" min="1" max="9"></div>
+                <div style="flex: 1;"><label id="lbl-ninos" style="font-weight: bold; color: #004080;">Niños / Infantes:</label><input type="number" id="ninos" value="0" min="0" max="6"></div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 8px;">
+                <div style="flex: 1;"><label id="lbl-aerolinea" style="font-weight: bold; color: #004080;">Aerolínea Preferida (Opcional):</label><input type="text" id="aerolinea" placeholder="Ej: American, Avianca, etc."></div>
+                <div style="flex: 1;"><label id="lbl-equipaje" style="font-weight: bold; color: #004080;">Equipaje esperado:</label>
+                    <select id="equipaje">
+                        <option value="carryon">Mochila + Maleta de mano</option>
+                        <option value="checked">Incluir maleta documentada</option>
+                        <option value="basic">Solo objeto personal</option>
+                    </select>
+                </div>
             </div>
         </div>
 
         <div id="error-box" class="error-message hidden"></div>
         
         <div style="margin-top: 20px;">
-            <button class="btn-primary" onclick="prepararConexionRespiratoria()">Continuar a Activación</button>
-            <button class="btn-danger" onclick="switchView('view-home')">Atrás</button>
+            <button class="btn-primary" id="btn-procesar" onclick="prepararConexionRespiratoria()">Continuar a Relajación y Activación</button>
+            <button class="btn-danger" id="btn-cancelar" onclick="switchView('view-home')">Atrás</button>
         </div>
     </div>
 
-    <!-- VISTA 3: RELAJACIÓN Y APERTURA DE GOOGLE CON VOZ ABIERTA -->
+    <!-- VISTA 3: RELAJACIÓN Y APERTURA DE GOOGLE EN PESTAÑA LIMPIA (SIN INTERFERENCIAS) -->
     <div id="view-loading" class="hidden">
         <h2 id="load-title">Preparando Tu Tranquilidad</h2>
-        <p style="color: #555; font-size: 13px; line-height: 1.4;">Inhala profundo. Abriremos Google Flights de forma limpia, manteniendo el micrófono abierto y activo en segundo plano para escucharte en todo momento.</p>
+        <p id="load-desc" style="color: #555; font-size: 13px; line-height: 1.4;">Inhala profundo. Abriremos Google Flights en una pestaña limpia y totalmente libre, con el micrófono abierto operando en paralelo para asistirte por voz sin tocar Google.</p>
         
         <div id="breathing-circle"><span id="breath-txt">Inhala calma</span></div>
         
         <div style="background: #e8f4fd; border: 1px solid #bbe1fa; padding: 10px; border-radius: 6px; font-size: 12px; color: #004080; margin: 10px 0; text-align: left; line-height: 1.4;">
-            🎙️ <strong>MICRÓFONO ABIERTO Y ACTIVO:</strong> Al abrir Google, el micrófono estará escuchando activamente. Di <em>"Pausa"</em> (o <em>"Pause"</em>) para silenciarlo, y <em>"Continúa"</em> (o <em>"Continue"</em>) para reactivarlo al instante.
+            🎙️ <strong>MICRÓFONO ABIERTO Y ACTIVO:</strong> Di <em>"Pausa"</em> o <em>"Pause"</em> para silenciar el asistente, y <em>"Continúa"</em> o <em>"Continue"</em> para reactivarlo en cualquier momento.
         </div>
 
         <div style="margin-top: 15px;">
-            <button class="btn-success" onclick="abrirGoogleConMicfonoAbierto()">✈️ ABRIR GOOGLE Y ACTIVAR MICRÓFONO EN VIVO</button>
+            <button class="btn-success" onclick="abrirGooglePestanaLibre()">✈️ ABRIR GOOGLE FLIGHTS LIBRE Y ACTIVAR VOZ</button>
         </div>
     </div>
-</div>
-
-<!-- WIDGET FLOTANTE QUE SE INYECTA O ACTIVA EN GOOGLE FLIGHTS -->
-<div id="floating-voice-widget" class="hidden">
-    <span id="widget-status-txt">🎙️ Micrófono Abierto</span>
-    <button onclick="toggleMicWidget()" id="widget-btn-action" style="background: #fff; color: #004080; border: none; padding: 4px 10px; border-radius: 15px; font-size: 11px; font-weight: bold; cursor: pointer;">Pausa</button>
 </div>
 
 <script>
@@ -271,7 +282,7 @@ function evaluarAceptacionLegal() {
 
 function iniciarRutaViaje() {
     switchView('view-form');
-    hablarVozClara(currentLang === 'es' ? "Por favor completa los datos de tu viaje." : "Please fill in your travel data.");
+    hablarVozClara(currentLang === 'es' ? "Por favor completa los datos detallados de tu viaje." : "Please fill in your detailed travel data.");
 }
 
 function hablarVozClara(text) {
@@ -292,10 +303,14 @@ function prepararConexionRespiratoria() {
     let dest = document.getElementById('destino').value.trim();
     let depDate = document.getElementById('fecha_salida').value;
     let retDate = document.getElementById('fecha_regreso').value;
+    let tripType = document.getElementById('tipo_viaje').value;
+    let pax = document.getElementById('pasajeros').value;
+    let ninos = document.getElementById('ninos').value;
+    let airline = document.getElementById('aerolinea').value.trim();
     let errBox = document.getElementById('error-box');
 
     if (!org || !dest) {
-        let msg = currentLang === 'es' ? "Por favor ingresa origen y destino." : "Please enter origin and destination.";
+        let msg = currentLang === 'es' ? "Por favor ingresa al menos el origen y el destino." : "Please enter at least origin and destination.";
         errBox.innerText = msg;
         errBox.classList.remove('hidden');
         hablarVozClara(msg);
@@ -303,9 +318,15 @@ function prepararConexionRespiratoria() {
     }
     errBox.classList.add('hidden');
     
-    let queryParams = `flights from ${org.toUpperCase().substring(0,3)} to ${dest.toUpperCase().substring(0,3)}`;
+    let o = org.toUpperCase().substring(0, 3);
+    let d = dest.toUpperCase().substring(0, 3);
+    
+    let queryParams = `flights from ${o} to ${d}`;
     if (depDate) queryParams += ` on ${depDate}`;
-    if (retDate) queryParams += ` returning ${retDate}`;
+    if (retDate && tripType === "1") queryParams += ` returning ${retDate}`;
+    if (airline) queryParams += ` airline ${airline}`;
+    let totalPax = parseInt(pax) + parseInt(ninos);
+    queryParams += ` passengers ${totalPax}`;
     
     urlGoogleFlightsGlobal = `https://www.google.com/travel/flights?q=${encodeURIComponent(queryParams)}`;
 
@@ -313,38 +334,19 @@ function prepararConexionRespiratoria() {
     iniciarCicloRespiratorioDinamico();
 }
 
-function abrirGoogleConMicfonoAbierto() {
+function abrirGooglePestanaLibre() {
     if (breathInterval) {
         clearInterval(breathInterval);
         breathInterval = null;
     }
     
-    // Guardamos en sessionStorage que el viaje está activo para que al llegar a Google Flights (o abrir ventana) opere el reconocimiento continuo de voz en segundo plano
-    sessionStorage.setItem("al_cielo_voice_active", "true");
-    sessionStorage.setItem("al_cielo_lang", currentLang);
+    // Abrir Google Flights en una nueva pestaña totalmente limpia, libre de widgets e inyecciones para que Google trabaje al 100%
+    window.open(urlGoogleFlightsGlobal, '_blank');
     
-    // Abrir Google Flights en la misma ventana de forma totalmente limpia y original
-    window.location.href = urlGoogleFlightsGlobal;
+    // Mantener activo el reconocimiento de voz en esta misma pestaña de asesoría (sin contaminar la pantalla de Google)
+    iniciarReconocimientoVozAbierto();
+    hablarVozClara(currentLang === 'es' ? "Google Flights abierto en pestaña libre. Te escucho aquí para orientarte." : "Google Flights opened in free tab. Listening here to guide you.");
 }
-
-// Inicialización automática de escucha de voz abierta si estamos en Google Flights o en la app
-window.addEventListener('DOMContentLoaded', () => {
-    let isVoiceActive = sessionStorage.getItem("al_cielo_voice_active");
-    if (isVoiceActive === "true") {
-        let savedLang = sessionStorage.getItem("al_cielo_lang");
-        if (savedLang) currentLang = savedLang;
-        
-        // Ocultar contenedor principal si existiera y mostrar widget flotante discreto en Google Flights
-        let setupContainer = document.getElementById('setup-container');
-        if (setupContainer) setupContainer.classList.add('hidden');
-        
-        let widget = document.getElementById('floating-voice-widget');
-        if (widget) widget.classList.remove('hidden');
-        
-        iniciarReconocimientoVozAbierto();
-        hablarVozClara(currentLang === 'es' ? "Asistente activado en segundo plano. Te escucho." : "Assistant active in the background. Listening.");
-    }
-});
 
 function iniciarReconocimientoVozAbierto() {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return;
@@ -357,24 +359,20 @@ function iniciarReconocimientoVozAbierto() {
     recognition.onresult = (event) => {
         let textoDicho = event.results[event.resultIndex][0].transcript.toLowerCase().trim();
         
-        // Comandos estrictos por voz: Pausa / Pause y Continúa / Continue
         if (textoDicho.includes("pausa") || textoDicho.includes("pause") || textoDicho.includes("silencio") || textoDicho.includes("stop")) {
             micActive = false;
-            actualizarWidgetUI(false);
             hablarVozClara(currentLang === 'es' ? "Micrófono en pausa." : "Microphone paused.");
             return;
         }
         
         if (textoDicho.includes("continúa") || textoDicho.includes("continua") || textoDicho.includes("continue") || textoDicho.includes("enciende") || textoDicho.includes("start")) {
             micActive = true;
-            actualizarWidgetUI(true);
             hablarVozClara(currentLang === 'es' ? "Micrófono reactivado." : "Microphone active.");
             return;
         }
 
         if (!micActive) return;
 
-        // Responder a dudas generales del usuario por voz en segundo plano
         procesarDuaVozSegundoplano(textoDicho);
     };
 
@@ -384,36 +382,11 @@ function iniciarReconocimientoVozAbierto() {
     try { recognition.start(); } catch(e) {}
 }
 
-function actualizarWidgetUI(activo) {
-    let widget = document.getElementById('floating-voice-widget');
-    let txt = document.getElementById('widget-status-txt');
-    let btn = document.getElementById('widget-btn-action');
-    if (activo) {
-        widget.classList.remove('paused');
-        txt.innerText = currentLang === 'es' ? "🎙️ Micrófono Abierto" : "🎙️ Mic Open";
-        btn.innerText = currentLang === 'es' ? "Pausa" : "Pause";
-    } else {
-        widget.classList.add('paused');
-        txt.innerText = currentLang === 'es' ? "🔇 En Pausa" : "🔇 Paused";
-        btn.innerText = currentLang === 'es' ? "Continúa" : "Continue";
-    }
-}
-
-function toggleMicWidget() {
-    micActive = !micActive;
-    actualizarWidgetUI(micActive);
-    if (micActive) {
-        hablarVozClara(currentLang === 'es' ? "Micrófono reactivado." : "Microphone active.");
-    } else {
-        hablarVozClara(currentLang === 'es' ? "Micrófono en pausa." : "Microphone paused.");
-    }
-}
-
 function procesarDuaVozSegundoplano(pregunta) {
     let lower = pregunta.toLowerCase();
     let respuesta = currentLang === 'es'
-        ? "Revisa con calma las opciones en pantalla. Si te piden un pago o equipaje extra opcional, desmárcalo si no lo deseas."
-        : "Check options calmly. If they ask for optional extra baggage, uncheck it if you don't wish to pay extra.";
+        ? "Revisa con calma las opciones en la pantalla de Google. Si te piden un pago o equipaje extra opcional, desmárcalo si no lo deseas."
+        : "Check options calmly on Google screen. If they ask for optional extra baggage, uncheck it if you don't wish to pay extra.";
     
     if (lower.includes("seguro") || lower.includes("insurance")) {
         respuesta = currentLang === 'es'
@@ -430,40 +403,76 @@ function procesarDuaVozSegundoplano(pregunta) {
 
 function handleClose() { 
     if (confirm(currentLang === 'es' ? "¿Deseas salir?" : "Do you wish to exit?")) { 
-        sessionStorage.removeItem("al_cielo_voice_active");
         window.location.href = "about:blank"; 
     } 
 }
 
+const translations = {
+    es: {
+        title: "AL CIELO",
+        subtitle: "Servicio Profesional Privado de Orientación, Acompañamiento y Blindaje contra Errores de Viaje.",
+        acceptText: "He leído, acepto el acuerdo y firmo para proteger mi proceso de viaje",
+        entrar: "Acepto y Firmar Acuerdo",
+        formTitle: "Datos Completos para Automatización de Vuelo",
+        formDesc: "Llene estos campos detallados para configurar su búsqueda con total precisión, certeza y seguridad antes de abrir Google Flights.",
+        lblOrigen: "Origen (IATA):",
+        lblDestino: "Destino (IATA):",
+        lblSalida: "Fecha Salida:",
+        lblRegreso: "Fecha Regreso:",
+        lblTipo: "Tipo de Viaje:",
+        lblClase: "Clase de Asiento:",
+        lblPasajeros: "Pasajeros Adultos:",
+        lblNinos: "Niños / Infantes:",
+        lblAerolinea: "Aerolínea Preferida (Opcional):",
+        lblEquipaje: "Equipaje esperado:",
+        procesar: "Continuar a Relajación y Activación",
+        cancelar: "Atrás",
+        loadTitle: "Preparando Tu Tranquilidad"
+    },
+    en: {
+        title: "TO THE SKY",
+        subtitle: "Private Professional Guidance and Travel Shielding Service.",
+        acceptText: "I have read, accept the agreement and sign to protect my travel process",
+        entrar: "Accept & Sign Agreement",
+        formTitle: "Complete Data for Flight Automation",
+        formDesc: "Fill in these detailed fields to configure your search with precision and security before opening Google Flights.",
+        lblOrigen: "Origin (IATA):",
+        lblDestino: "Destination (IATA):",
+        lblSalida: "Departure Date:",
+        lblRegreso: "Return Date:",
+        lblTipo: "Trip Type:",
+        lblClase: "Seat Class:",
+        lblPasajeros: "Adult Passengers:",
+        lblNinos: "Children / Infants:",
+        lblAerolinea: "Preferred Airline (Optional):",
+        lblEquipaje: "Expected Baggage:",
+        procesar: "Continue to Relaxation & Activation",
+        cancelar: "Back",
+        loadTitle: "Preparing Your Peace of Mind"
+    }
+};
+
 function setLanguage(lang) {
     currentLang = lang;
-    let t = {
-        es: {
-            title: "AL CIELO",
-            subtitle: "Servicio Profesional Privado de Orientación, Acompañamiento y Blindaje contra Errores de Viaje.",
-            acceptText: "He leído, acepto el acuerdo y firmo para proteger mi proceso de viaje",
-            entrar: "Acepto y Firmar Acuerdo",
-            formTitle: "Datos Completos para Automatización de Vuelo",
-            formDesc: "Llene estos campos para configurar su búsqueda en Google de manera limpia y sin interferencias.",
-            loadTitle: "Preparando Tu Tranquilidad"
-        },
-        en: {
-            title: "TO THE SKY",
-            subtitle: "Private Professional Guidance and Travel Shielding Service.",
-            acceptText: "I have read, accept the agreement and sign to protect my travel process",
-            entrar: "Accept & Sign Agreement",
-            formTitle: "Complete Data for Flight Automation",
-            formDesc: "Fill in these fields so your search is configured cleanly.",
-            loadTitle: "Preparing Your Peace of Mind"
-        }
-    }[lang];
-    
+    let t = translations[lang];
     document.getElementById('title').innerText = t.title;
     document.getElementById('subtitle').innerText = t.subtitle;
     document.getElementById('lbl-accept-text').innerText = t.acceptText;
     document.getElementById('btn-entrar').innerText = t.entrar;
     document.getElementById('form-title').innerText = t.formTitle;
     document.getElementById('form-desc').innerText = t.formDesc;
+    document.getElementById('lbl-origen').innerText = t.lblOrigen;
+    document.getElementById('lbl-destino').innerText = t.lblDestino;
+    document.getElementById('lbl-salldas' in t ? 'lbl-salidas' : 'lbl-salida').innerText = t.lblSalida;
+    document.getElementById('lbl-regreso').innerText = t.lblRegreso;
+    document.getElementById('lbl-tipo').innerText = t.lblTipo;
+    document.getElementById('lbl-clase').innerText = t.lblClase;
+    document.getElementById('lbl-pasajeros').innerText = t.lblPasajeros;
+    document.getElementById('lbl-ninos').innerText = t.lblNinos;
+    document.getElementById('lbl-aerolinea').innerText = t.lblAerolinea;
+    document.getElementById('lbl-equipaje').innerText = t.lblEquipaje;
+    document.getElementById('btn-procesar').innerText = t.procesar;
+    document.getElementById('btn-cancelar').innerText = t.cancelar;
     document.getElementById('load-title').innerText = t.loadTitle;
 }
 </script>
