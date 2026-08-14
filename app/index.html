@@ -50,7 +50,7 @@
             border-radius: 5px;
             border: 1px solid #ccc;
         }
-        /* Círculo Respiratorio Pulmonar (Ritmo humano de 25 años: 4s inhala, 4s exhala de forma continua) */
+        /* Círculo Respiratorio Pulmonar (Ritmo humano: 4s inhala, 4s exhala) */
         #breathing-circle {
             width: 140px;
             height: 140px;
@@ -81,80 +81,80 @@
             <button onclick="setLanguage('en')">English</button>
         </div>
 
-        <!-- VISTA 1: INICIO Y PROPÓSITO DE LA APP -->
+        <!-- VISTA 1: INICIO Y BÚSQUEDA DE VUELOS -->
         <div id="view-home">
             <h1 id="title">AL CIELO</h1>
             <p id="subtitle" style="font-size: 16px; line-height: 1.5; color: #555; margin: 20px 0;">
-                Bienvenido a tu casita de asistencia para viajar. Aquí te ayudamos a entender tu itinerario paso a paso, explicándote todo clarito como a un niño de 8 años, sin enredos y con total tranquilidad para que llegues seguro a tu destino.
+                Tu asistente especializada en la búsqueda, cotización y gestión de vuelos (directos y de conexión) con aerolíneas autorizadas. Te acompañamos a encontrar el boleto ideal para ti.
             </p>
             <div style="margin-top: 30px;">
-                <button id="btn-entrar" onclick="iniciarRutaViaje()">Entrar</button>
+                <button id="btn-entrar" onclick="iniciarRutaViaje()">Buscar Vuelos</button>
                 <button id="btn-cerrar" onclick="handleClose()">Cerrar</button>
             </div>
         </div>
 
-        <!-- VISTA 1.5: PREGUNTAS DE ORIENTACIÓN (HACIA DÓNDE VAMOS) -->
+        <!-- VISTA 1.5: PARÁMETROS DE BÚSQUEDA DE VUELO -->
         <div id="view-orientacion" class="hidden">
-            <h2 id="orientacion-heading">Cuéntame de tu viaje</h2>
-            <p id="orientacion-instruction">Para saber exactamente cómo ayudarte, dime por favor:</p>
-            <input type="text" id="input-origen" placeholder="¿De qué ciudad sales? (Ej: Miami)"><br>
-            <input type="text" id="input-escala" placeholder="¿En qué ciudad haces escala? (Ej: Panamá)"><br>
-            <input type="text" id="input-destino" placeholder="¿A qué ciudad llegas? (Ej: La Habana)"><br>
-            <input type="text" id="input-horas" placeholder="¿Cuántas horas de espera tienes? (Ej: dos horas y media)"><br>
-            <button id="btn-siguiente-orientacion" onclick="guardarOrientacion()">Continuar</button>
+            <h2 id="orientacion-heading">Detalles de tu Vuelo</h2>
+            <p id="orientacion-instruction">Indícanos la ruta para realizar la búsqueda exacta:</p>
+            <input type="text" id="input-origen" placeholder="Ciudad de Origen (Ej: Miami)"><br>
+            <input type="text" id="input-escala" placeholder="Ciudad de Escala o Conexión (Opcional)"><br>
+            <input type="text" id="input-destino" placeholder="Ciudad de Destino (Ej: La Habana)"><br>
+            <input type="text" id="input-horas" placeholder="Tiempo de espera en conexión (Ej: 2 horas)"><br>
+            <button id="btn-siguiente-orientacion" onclick="guardarOrientacion()">Buscar Opciones</button>
         </div>
 
-        <!-- VISTA 2: DESPERTAR DEL SERVIDOR -->
+        <!-- VISTA 2: DESPERTAR DEL RENDER -->
         <div id="view-render" class="hidden">
-            <h2 id="render-heading-title">Un momentito por favor...</h2>
+            <h2 id="render-heading-title">Rastreando conexiones...</h2>
             <p id="render-phrase" style="font-size: 18px; margin: 30px 0; font-style: italic;"></p>
         </div>
 
-        <!-- VISTA 3: FORMULARIO DE DATOS -->
+        <!-- VISTA 3: FORMULARIO DE DATOS DE PASAJERO -->
         <div id="view-form" class="hidden">
-            <h2 id="form-heading">Tus Datos Personales</h2>
-            <p id="form-instruction">Escribe tu nombre y número de pasaporte tal como aparecen en tu documento físico.</p>
-            <input type="text" id="input-nombre" placeholder="Tu nombre completo"><br>
-            <input type="text" id="input-pasaporte" placeholder="Número de tu pasaporte"><br>
-            <button id="btn-validar" onclick="validarDatos()">Continuar</button>
+            <h2 id="form-heading">Datos del Pasajero</h2>
+            <p id="form-instruction">Ingresa tu nombre completo y número de pasaporte para rellenar la reserva del vuelo.</p>
+            <input type="text" id="input-nombre" placeholder="Nombre completo del pasajero"><br>
+            <input type="text" id="input-pasaporte" placeholder="Número de pasaporte"><br>
+            <button id="btn-validar" onclick="validarDatos()">Continuar con la Reserva</button>
             <p id="error-box" style="color: red; font-weight: bold; margin-top: 15px;"></p>
         </div>
 
-        <!-- VISTA 4: CÍRCULO RESPIRATORIO (1 MINUTO CONTINUO) -->
+        <!-- VISTA 4: CÍRCULO RESPIRATORIO -->
         <div id="view-breath" class="hidden">
             <h2 id="breath-heading-title">Momento de Calma</h2>
             <div id="breathing-circle"></div>
             <p id="breath-phrase" style="font-size: 18px; font-weight: bold; min-height: 50px;"></p>
         </div>
 
-        <!-- VISTA 5: RETÉN DE LA VERDAD ( CON DATOS REALES ) -->
+        <!-- VISTA 5: RETÉN DE LA VERDAD (VERIFICACIÓN DE DATOS) -->
         <div id="view-confirm" class="hidden">
-            <h2 id="confirm-title-1">El Retén del Cariño</h2>
-            <p id="confirm-text-1">¿Escribiste tu nombre y pasaporte exactamente igual a tu documento? Revísalo bien letra por letra:</p>
+            <h2 id="confirm-title-1">Verificación de Pasajero</h2>
+            <p id="confirm-text-1">Por favor verifica que tus datos sean exactos para evitar incidencias con la aerolínea:</p>
             <div id="resumen-datos-1" style="font-size: 22px; font-weight: bold; color: #004080; margin: 20px 0; background: #eef2f5; padding: 10px; border-radius: 5px;"></div>
-            <button id="btn-conf-1" onclick="pasoConfirmacion2()">¡Sí, está perfecto!</button>
+            <button id="btn-conf-1" onclick="pasoConfirmacion2()">Datos Correctos</button>
         </div>
 
         <div id="view-confirm-2" class="hidden">
-            <h2 id="confirm-title-2">Segunda Revisión de Amor</h2>
-            <p id="confirm-text-2">Un pequeño error aquí podría hacer que la aerolínea no te deje abordar. Vuelve a mirar tus datos:</p>
+            <h2 id="confirm-title-2">Segunda Validación de Reserva</h2>
+            <p id="confirm-text-2">Revisa nuevamente tu nombre y número de pasaporte antes de emitir las opciones de vuelo:</p>
             <div id="resumen-datos-2" style="font-size: 22px; font-weight: bold; color: #004080; margin: 20px 0; background: #eef2f5; padding: 10px; border-radius: 5px;"></div>
             <p id="aviso-foto-legal" style="font-size: 14px; color: #666; margin: 15px 0; font-style: italic;">
-                Nota: Si lo deseas, por tu propia seguridad puedes tomar una captura de pantalla voluntaria y guardarla en tu galería para tenerla a mano.
+                Nota: Puedes guardar una captura de pantalla voluntaria para tus registros personales.
             </p>
-            <button id="btn-conf-2" onclick="iniciarCalmaRespiratoria()">Sí, todo está impecable</button>
+            <button id="btn-conf-2" onclick="iniciarCalmaRespiratoria()">Confirmar y Buscar Vuelos</button>
         </div>
 
-        <!-- VISTA 6: RESULTADOS, OPCIONES Y REPETIR VOZ -->
+        <!-- VISTA 6: RESULTADOS DE VUELOS Y CONEXIONES -->
         <div id="view-result" class="hidden">
-            <h2 id="result-title">Tu Viaje Explicado Paso a Paso</h2>
+            <h2 id="result-title">Opciones de Vuelo y Conexiones Encontradas</h2>
             <div id="itinerary-output" style="text-align: left; background: #eef2f5; padding: 15px; border-radius: 5px; margin-bottom: 20px;"></div>
             
-            <h3 id="opciones-heading" style="color: #004080; margin-top: 20px;">Las Mejores Opciones de Vuelo Para Ti</h3>
+            <h3 id="opciones-heading" style="color: #004080; margin-top: 20px;">Opciones de Vuelo Disponibles</h3>
             <div id="opciones-vuelo-container" style="margin-bottom: 20px;"></div>
 
             <div style="margin-top: 20px;">
-                <button id="btn-repetir-voz" onclick="repetirVozResultado()" style="background-color: #457b9d; color: white;">🔊 Repetir Audio de Calma</button>
+                <button id="btn-repetir-voz" onclick="repetirVozResultado()" style="background-color: #457b9d; color: white;">🔊 Repetir Audio</button>
                 <button id="btn-print" onclick="window.print()">Imprimir o Guardar en PDF</button>
             </div>
         </div>
@@ -162,66 +162,66 @@
 
     <script>
         let currentLang = 'es';
-        let datosViaje = { origen: 'Miami', escala: 'Panamá', destino: 'La Habana', horas: 'dos horas y cuarenta minutos' };
+        let datosViaje = { origen: 'Miami', escala: '', destino: 'La Habana', horas: '2 horas' };
         let datosUsuario = {};
         let textoUltimaVoz = "";
 
         const content = {
             es: {
                 title: "AL CIELO",
-                subtitle: "Bienvenido a tu casita de asistencia para viajar. Aquí te ayudamos a entender tu itinerario paso a paso, explicándote todo clarito como a un niño de 8 años, sin enredos y con total tranquilidad para que llegues seguro a tu destino.",
-                enter: "Entrar",
+                subtitle: "Tu asistente especializada en la búsqueda, cotización y gestión de vuelos (directos y de conexión) con aerolíneas autorizadas. Te acompañamos a encontrar el boleto ideal para ti.",
+                enter: "Buscar Vuelos",
                 close: "Cerrar",
-                alertClose: "¿Seguro que quieres cerrar tu casita de viaje ahora?",
-                sessionEnd: "Tu tiempo de seguridad ha terminado. Por tu privacidad, hemos borrado todo.",
-                orientacionHeading: "Cuéntame de tu viaje",
-                orientacionInstruction: "Para saber exactamente cómo ayudarte, dime por favor:",
-                btnSiguienteOrientacion: "Continuar",
-                renderTitle: "Un momentito por favor...",
-                formHeading: "Tus Datos Personales",
-                formInstruction: "Escribe tu nombre y número de pasaporte tal como aparecen en tu documento físico.",
-                inputNombre: "Tu nombre completo",
-                inputPasaporte: "Número de tu pasaporte",
-                btnValidar: "Continuar",
+                alertClose: "¿Estás seguro de cerrar la sesión de búsqueda de vuelos?",
+                sessionEnd: "La sesión ha expirado por seguridad. Se han borrado los datos temporales.",
+                orientacionHeading: "Detalles de tu Vuelo",
+                orientacionInstruction: "Indícanos la ruta para realizar la búsqueda exacta:",
+                btnSiguienteOrientacion: "Buscar Opciones",
+                renderTitle: "Rastreando conexiones...",
+                formHeading: "Datos del Pasajero",
+                formInstruction: "Ingresa tu nombre completo y número de pasaporte para rellenar la reserva del vuelo.",
+                inputNombre: "Nombre completo del pasajero",
+                inputPasaporte: "Número de pasaporte",
+                btnValidar: "Continuar con la Reserva",
                 breathHeading: "Momento de Calma",
-                confirmTitle1: "El Retén del Cariño",
-                confirmText1: "¿Escribiste tu nombre y pasaporte exactamente igual a tu documento? Revísalo bien letra por letra:",
-                btnConf1: "¡Sí, está perfecto!",
-                confirmTitle2: "Segunda Revisión de Amor",
-                confirmText2: "Un pequeño error aquí podría hacer que la aerolínea no te deje abordar. Vuelve a mirar tus datos:",
-                btnConf2: "Sí, todo está impecable",
-                resultTitle: "Tu Viaje Explicado Paso a Paso",
-                opcionesHeading: "Las Mejores Opciones de Vuelo Para Ti",
+                confirmTitle1: "Verificación de Pasajero",
+                confirmText1: "Por favor verifica que tus datos sean exactos para evitar incidencias con la aerolínea:",
+                btnConf1: "Datos Correctos",
+                confirmTitle2: "Segunda Validación de Reserva",
+                confirmText2: "Revisa nuevamente tu nombre y número de pasaporte antes de emitir las opciones de vuelo:",
+                btnConf2: "Confirmar y Buscar Vuelos",
+                resultTitle: "Opciones de Vuelo y Conexiones Encontradas",
+                opcionesHeading: "Opciones de Vuelo Disponibles",
                 btnPrint: "Imprimir o Guardar en PDF",
-                btnRepetirVoz: "🔊 Repetir Audio de Calma"
+                btnRepetirVoz: "🔊 Repetir Audio"
             },
             en: {
                 title: "TO THE SKY",
-                subtitle: "Welcome to your friendly travel assistance home. Here we help you understand your itinerary step by step, explaining everything clearly like to an 8-year-old child, without tangles and with total peace of mind.",
-                enter: "Enter",
+                subtitle: "Your specialized assistant in flight search, quotation, and management (direct and connecting) with authorized airlines. We help you find your ideal ticket.",
+                enter: "Search Flights",
                 close: "Close",
-                alertClose: "Are you sure you want to close your travel home now?",
-                sessionEnd: "Your safety time has ended. For your privacy, we have cleared everything.",
-                orientacionHeading: "Tell me about your trip",
-                orientacionInstruction: "To know exactly how to help you, please tell me:",
-                btnSiguienteOrientacion: "Continue",
-                renderTitle: "Just a tiny moment please...",
-                formHeading: "Your Personal Details",
-                formInstruction: "Write your name and passport number exactly as they appear on your physical document.",
-                inputNombre: "Your full name",
-                inputPasaporte: "Your passport number",
-                btnValidar: "Continue",
+                alertClose: "Are you sure you want to close the flight search session?",
+                sessionEnd: "Session has expired for security. Temporary data has been cleared.",
+                orientacionHeading: "Flight Details",
+                orientacionInstruction: "Provide your route details to perform the exact search:",
+                btnSiguienteOrientacion: "Search Options",
+                renderTitle: "Tracking connections...",
+                formHeading: "Passenger Information",
+                formInstruction: "Enter your full name and passport number to pre-fill the flight reservation.",
+                inputNombre: "Passenger's full name",
+                inputPasaporte: "Passport number",
+                btnValidar: "Continue with Reservation",
                 breathHeading: "Calm Moment",
-                confirmTitle1: "The Love Checkpoint",
-                confirmText1: "Did you write your name and passport exactly like your document? Check it well, letter by letter:",
-                btnConf1: "Yes, it's perfect!",
-                confirmTitle2: "Second Loving Review",
-                confirmText2: "A small mistake here could make the airline not let you board. Look at your details again:",
-                btnConf2: "Yes, everything is spotless",
-                resultTitle: "Your Journey Explained Step by Step",
-                opcionesHeading: "The Best Flight Options For You",
+                confirmTitle1: "Passenger Verification",
+                confirmText1: "Please verify that your details are accurate to avoid airline issues:",
+                btnConf1: "Correct Data",
+                confirmTitle2: "Second Reservation Validation",
+                confirmText2: "Review your name and passport number again before issuing flight options:",
+                btnConf2: "Confirm and Search Flights",
+                resultTitle: "Found Flight Options and Connections",
+                opcionesHeading: "Available Flight Options",
                 btnPrint: "Print or Save as PDF",
-                btnRepetirVoz: "🔊 Repeat Calm Audio"
+                btnRepetirVoz: "🔊 Repeat Audio"
             }
         };
 
@@ -279,7 +279,7 @@
         }
 
         function iniciarRutaViaje() {
-            speak(currentLang === 'es' ? "Cuéntame de tu viaje para saber cómo ayudarte." : "Tell me about your trip so I know how to help you.");
+            speak(currentLang === 'es' ? "Indícanos los detalles de tu vuelo." : "Provide your flight details.");
             switchView('view-orientacion');
         }
 
@@ -290,7 +290,7 @@
             let horas = document.getElementById('input-horas').value.trim();
 
             if (origen) datosViaje.origen = origen;
-            if (escala) datosViaje.escala = escala;
+            datosViaje.escala = escala;
             if (destino) datosViaje.destino = destino;
             if (horas) datosViaje.horas = horas;
 
@@ -322,7 +322,7 @@
                 setTimeout(() => {
                     clearInterval(interval);
                     switchView('view-form');
-                    speak(currentLang === 'es' ? "Escribe tus datos personales con calma." : "Write your personal details calmly.");
+                    speak(currentLang === 'es' ? "Ingresa tus datos personales para la reserva." : "Enter your personal details for reservation.");
                 }, 45000);
             } catch (e) {
                 switchView('view-form');
@@ -409,16 +409,18 @@
             let resItin = await fetch('/traducir_itinerario', { method: 'POST', body: formData });
             let dataItin = await resItin.json();
 
+            let escalaTexto = datosViaje.escala ? `<p><strong>Escala:</strong> ${datosViaje.escala} (${datosViaje.horas})</p><p><strong>2.</strong> ${dataItin.paso_2}</p><p><strong>3.</strong> ${dataItin.paso_3}</p>` : `<p><strong>2.</strong> ${dataItin.paso_3}</p>`;
+
             let htmlItin = `
-                <p><strong>Viajero:</strong> ${datosUsuario.nombre} (Pasaporte: ${datosUsuario.pasaporte})</p>
+                <p><strong>Pasajero:</strong> ${datosUsuario.nombre} (Pasaporte: ${datosUsuario.pasaporte})</p>
+                <p><strong>Ruta:</strong> ${datosViaje.origen} ${datosViaje.escala ? '-> ' + datosViaje.escala + ' ->' : '->'} ${datosViaje.destino}</p>
                 <hr style="border:0; border-top:1px solid #ccc; margin:10px 0;">
                 <p><strong>1.</strong> ${dataItin.paso_1}</p>
-                <p><strong>2.</strong> ${dataItin.paso_2}</p>
-                <p><strong>3.</strong> ${dataItin.paso_3}</p>
+                ${escalaTexto}
             `;
             document.getElementById('itinerary-output').innerHTML = htmlItin;
 
-            let resOpciones = await fetch(`/opciones_vuelo?lang=${currentLang}`);
+            let resOpciones = await fetch(`/opciones_vuelo?origen=${encodeURIComponent(datosViaje.origen)}&destino=${encodeURIComponent(datosViaje.destino)}&escala=${encodeURIComponent(datosViaje.escala)}&lang=${currentLang}`);
             let dataOpciones = await resOpciones.json();
 
             let htmlOpciones = "";
@@ -435,7 +437,7 @@
             document.getElementById('opciones-vuelo-container').innerHTML = htmlOpciones;
 
             switchView('view-result');
-            let mensajeExito = currentLang === 'es' ? "Tu viaje y tus opciones ya están listos en pantalla." : "Your trip and options are now ready on screen.";
+            let mensajeExito = currentLang === 'es' ? "Las opciones de vuelo y conexiones han sido encontradas con éxito." : "Flight options and connections have been successfully found.";
             speak(mensajeExito);
         }
 
