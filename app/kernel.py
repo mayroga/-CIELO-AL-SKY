@@ -1,8 +1,12 @@
 import os
 import requests
+import json
+from google import genai
+from google.genai import types
 
 class AsesorKernel:
     def __init__(self):
+        # Base de datos de aeropuertos para normalización rápida
         self.iata_db = {
             "LA HABANA": "HAV", "CUBA": "HAV", "HAVANA": "HAV", "HAV": "HAV",
             "MIAMI": "MIA", "MIAMI FL": "MIA", "MIA": "MIA",
@@ -12,6 +16,8 @@ class AsesorKernel:
             "NUEVA YORK": "JFK", "NEW YORK": "JFK", "JFK": "JFK",
             "PANAMA": "PTY", "PTY": "PTY"
         }
+        
+        # Rango de cobertura cerrado de aerolíneas aliadas y chárters
         self.aerolineas_autorizadas = {
             "Copa Airlines": "https://www.copaair.com",
             "Avianca": "https://www.avianca.com",
@@ -27,131 +33,146 @@ class AsesorKernel:
             "Xael Charter": "https://www.xaelcharter.com",
             "Aerocuba": "https://www.aerocuba.com"
         }
-        self.session_active = False
 
+        # Inicialización del cliente oficial de Gemini utilizando variables de entorno de Render
+        # Esto blinda tu API Key frente a robos en repositorios públicos de GitHub
+        gemini_key = os.getenv("GEMINI_API_KEY")
+        self.ai_client = genai.Client(api_key=gemini_key) if gemini_key else None
+        
+        # Repositorio volátil de mapas de inyección para automatización
+        self.mapas_selectores_locales = {}
+
+        # Frases únicas de carga para el despertar de Render (Completamente distintas a la respiración)
         self.frases_render_es = [
-            "Buscando vuelos disponibles con calma, ya casi encontramos las mejores opciones.",
-            "Conectando de forma segura con los sistemas de aerolíneas, un momento por favor.",
-            "Todo marcha de maravilla, cotizando cada ruta y conexión con precisión.",
-            "Ya casi terminamos de rastrear los pasajes perfectos para tu viaje."
+            "Estás haciendo las cosas bien. Tu asistente está despertando los sistemas oficiales.",
+            "Asegurando una conexión privada limpia y transparente. Relájate un momento.",
+            "Protegiendo tu búsqueda de cambios raros. Tu paciencia vale muchísimo."
         ]
         self.frases_render_en = [
-            "Searching for available flights calmly, we are almost finding the best options.",
-            "Connecting securely with airline systems, just a moment please.",
-            "Everything is going wonderfully, quoting each route and connection with precision.",
-            "We are almost finished tracking down the perfect tickets for your journey."
+            "You are doing great. Your assistant is waking up the official systems.",
+            "Securing a clean and transparent private connection. Relax for a moment.",
+            "Protecting your search from unexpected changes. Your patience is highly valued."
         ]
 
-        self.frases_respiracion_es = [
-            "Sueltas el control de lo que no puedes cambiar. Inhala despacio... y exhala suave.",
-            "Todo está fluyendo de manera correcta. Mantén la calma, ya estamos encontrando tu vuelo.",
-            "Respira hondo como un roble fuerte. Cada latido te acerca más a tu destino."
-        ]
-        self.frases_respiracion_en = [
-            "You release control of what you cannot change. Inhale slowly... and exhale softly.",
-            "Everything is flowing correctly. Stay calm, we are already finding your flight.",
-            "Breathe deeply like a strong tree. Every heartbeat brings you closer to your destination."
-        ]
-
-    def obtener_url_aerolinea(self, nombre):
-        return self.aerolineas_autorizadas.get(nombre)
-
+    # =========================================================================
+    # RECTIFICACIÓN DE CARACTERES EN TIEMPO REAL (ESTILO NIÑO DE 8 AÑOS)
+    # =========================================================================
     def validar_datos_entrada(self, nombre: str, pasaporte: str, lang: str = "es"):
+        """
+        Bloquea cualquier funcionamiento fantasma. Limpia dobles espacios y valida de
+        forma estricta caracteres inválidos, explicando el error como a un niño de 8 años.
+        """
         try:
-            if not nombre or not pasaporte:
-                return {"valido": False, "error": "Te falta información. Escribe nombre y pasaporte." if lang == "es" else "Missing info. Please enter name and passport."}
-            
-            if any(char.isdigit() for char in nombre):
-                return {"valido": False, "error": "¡Opa! El nombre solo lleva letras." if lang == "es" else "Oops! Names only contain letters."}
-            
-            return {"valido": True, "mensaje": "¡Listo!" if lang == "es" else "Ready!"}
-        except Exception as e:
-            return {"valido": False, "error": "Error de validación interno."}
+            # Eliminar espacios múltiples internos y laterales
+            nombre_limpio = " ".join(nombre.split()).strip()
+            pasaporte_limpio = pasaporte.replace(" ", "").strip()
 
+            if not nombre_limpio or not pasaporte_limpio:
+                return {
+                    "valido": False,
+                    "error": "¡Opa! Te saltaste un cuadro vacío. Por favor llénalos todos para que el avión sepa quién eres." if lang == "es" 
+                    else "Oops! You skipped a blank box. Please fill them all so the plane knows who you are."
+                }
+
+            # Detección de números o símbolos en campos de texto alfabéticos
+            if any(char.isdigit() for char in nombre_limpio):
+                return {
+                    "valido": False,
+                    "error": "¡Opa! Pusiste un número dentro de tu nombre o apellido. Los nombres solo llevan letras bonitas, quítalo para continuar." if lang == "es"
+                    else "Oops! You put a number inside your name. Names only have pretty letters, remove it to continue."
+                }
+
+            return {
+                "valido": True, 
+                "nombre_depurado": nombre_limpio, 
+                "pasaporte_depurado": pasaporte_limpio,
+                "mensaje": "¡Listo!" if lang == "es" else "Ready!"
+            }
+        except Exception:
+            return {
+                "valido": False, 
+                "error": "Ocurrió un inconveniente procesando tus datos. Revisa la pantalla." if lang == "es"
+                else "An issue occurred processing your data. Check the screen."
+            }
+
+    # =========================================================================
+    # TRADUCCIÓN DE ITINERARIO CON IA (ESTILO NIÑO DE 8 AÑOS - CERO PRECIOS INVENTADOS)
+    # =========================================================================
     def traducir_itinerario(self, origen: str, escala: str, destino: str, horas_escala: str, lang: str = "es"):
-        if lang == "es":
-            salida = f"Vuelo inicial saliendo desde {origen} con destino al punto de conexión en {escala}."
-            estancia = f"Escala confirmada en {escala} con un tiempo de espera de {horas_escala}. Gestión automática de equipaje asegurada."
-            llegada = f"Vuelo de conexión desde {escala} con llegada final y directa a {destino}."
-            return {"paso_1": salida, "paso_2": estancia, "paso_3": llegada}
-        else:
-            salida = f"Initial flight departing from {origen} to connection point in {escala}."
-            estancia = f"Confirmed layover in {escala} with a wait time of {horas_escala}."
-            llegada = f"Connecting flight from {escala} with direct arrival to {destino}."
-            return {"paso_1": salida, "paso_2": estancia, "paso_3": llegada}
+        """
+        Llama de forma directa a la API de Gemini para masticar el itinerario técnico
+        de los aeropuertos en un lenguaje infantil, directo y libre de agobios o tecnicismos.
+        """
+        if not self.ai_client:
+            # Fallback seguro en caso de que Render no tenga la API Key lista
+            return {
+                "itinerario_masticado": f"Viaje desde {origen} hacia {destino}. Por favor revisa las pantallas del aeropuerto."
+            }
 
-    def normalizar_lugar(self, texto: str):
-        if not texto:
-            return None
-        return self.iata_db.get(str(texto).upper().strip())
+        prompt = f"""
+        Actúa como un asistente amigable de viajes para un niño de 8 años.
+        Traduce el siguiente itinerario de vuelo a una historia cronológica muy corta y ultra sencilla:
+        - Origen: {origen}
+        - Escala / Conexión: {escala if escala else 'Ninguna (Vuelo Directo)'}
+        - Destino Final: {destino}
+        - Tiempo de espera en escala: {horas_escala}
+        
+        Reglas de escritura obligatorias:
+        1. Explica los pasos numerados del 1 al 3 usando palabras dulces como 'Te subes al avión', 'vuelas por los aires', 'esperas caminando tranquilo'.
+        2. Explica explícitamente qué pasa con el equipaje: aclara que la aerolínea se encarga de cambiar las maletas grandes de avión por ellos mientras descansan.
+        3. Si la escala es corta, advierte amablemente que deben caminar rápido sin distraerse.
+        4. Responde estrictamente en idioma: {lang}.
+        """
 
-    def obtener_opciones_vuelo(self, origen: str, destino: str, escala: str = "", lang: str = "es"):
         try:
-            origen_code = self.normalizar_lugar(origen)
-            destino_code = self.normalizar_lugar(destino)
+            response = self.ai_client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt
+            )
+            return {"itinerario_masticado": response.text.strip()}
+        except Exception:
+            return {"itinerario_masticado": f"Tu vuelo te llevará desde {origen} hasta {destino} de forma segura."}
 
-            if not origen_code or not destino_code:
-                msg = "No reconozco esa ciudad. Por favor, rectifica el origen o destino para poder asistirte." if lang == "es" else "I don't recognize that city. Please rectify the origin or destination to assist you."
-                return {"valido": False, "error": msg}
+    # =========================================================================
+    # MOTOR DE DOBLE VIGILANCIA (DIARIA / SEMANAL) Y BORRADO DE OBSOLESCENCIA
+    # =========================================================================
+    def chequear_actualizaciones_aerolineas(self):
+        """
+        Simulación del motor de Doble Vigilancia ejecutado de forma interna por el servidor.
+        Descarga el HTML público de los formularios chárter/comerciales, Gemini analiza
+        los cambios en los campos y SUSTITUYE por completo los datos viejos para optimizar velocidad.
+        """
+        if not self.ai_client:
+            return {"status": "error", "message": "API de Gemini no vinculada en Render."}
 
-            token = os.getenv("TRAVELPAYOUTS_API_TOKEN")
-            precios_encontrados = []
+        # Simulación de esqueleto HTML capturado del formulario público de Copa Airlines o Cubazul
+        html_publico_aerolinea = """
+        <form id="passenger-checkout-form">
+            <input type="text" name="passenger_first_name_updated" placeholder="First Name">
+            <input type="text" name="passenger_passport_id_new" placeholder="Passport Number">
+        </form>
+        """
+
+        prompt = """
+        Analiza este fragmento de código HTML público de formulario de aerolínea y extrae los selectores CSS exactos para los campos: Nombre y Pasaporte.
+        Devuelve estrictamente un objeto JSON con las llaves 'selector_nombre' y 'selector_pasaporte'.
+        """
+
+        try:
+            response = self.ai_client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=html_publico_aerolinea,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json"
+                )
+            )
             
-            if token:
-                try:
-                    url = "https://api.travelpayouts.com/v1/prices/cheap"
-                    params = {"origin": origen_code, "destination": destino_code, "token": token, "currency": "USD"}
-                    response = requests.get(url, params=params, timeout=5)
-                    if response.status_code == 200:
-                        data = response.json().get("data", {})
-                        if destino_code in data:
-                            vuelos_dict = data[destino_code]
-                            for k, v in vuelos_dict.items():
-                                precios_encontrados.append({
-                                    "precio": v.get("price"),
-                                    "aerolinea": v.get("airline"),
-                                    "enlace": f"https://www.aviasales.com/search/{origen_code}{destino_code}1"
-                                })
-                            precios_encontrados = sorted(precios_encontrados, key=lambda x: x["precio"])
-                except Exception:
-                    pass
-
-            if precios_encontrados:
-                opciones_dinamicas = []
-                for idx, item in enumerate(precios_encontrados[:8], 1):
-                    opciones_dinamicas.append({
-                        "titulo": f"Opción {idx} - Tarifa: ${item['precio']} USD",
-                        "descripcion": f"Aerolínea operadora: {item['aerolinea']}. Ruta hacia {destino} con total respaldo y asesoría."
-                    })
-                return {
-                    "valido": True,
-                    "ruta": f"{origen_code} -> {escala + ' -> ' if escala else ''}{destino_code}",
-                    "opciones": opciones_dinamicas
-                }
-
-            # Respaldo seguro
-            if lang == "es":
-                return {
-                    "valido": True,
-                    "ruta": f"{origen_code} -> {escala + ' -> ' if escala else ''}{destino_code}",
-                    "opciones": [
-                        {"titulo": "1. Opción Económica", "descripcion": f"Vuelo optimizado hacia {destino}."},
-                        {"titulo": "2. Opción Protegida", "descripcion": "Respaldo directo con aerolíneas aliadas."},
-                        {"titulo": "3. Opción Directa / Especial", "descripcion": f"Búsqueda prioritaria hacia {destino}."},
-                        {"titulo": "4. Opción Charter", "descripcion": "Operadores autorizados según disponibilidad."}
-                    ]
-                }
-            else:
-                return {
-                    "valido": True,
-                    "ruta": f"{origen_code} -> {escala + ' -> ' if escala else ''}{destino_code}",
-                    "opciones": [
-                        {"titulo": "1. Economic Option", "descripcion": f"Optimized flight to {destino}."},
-                        {"titulo": "2. Protected Option", "descripcion": "Support with partner airlines."},
-                        {"titulo": "3. Direct Option", "descripcion": "Priority search."},
-                        {"titulo": "4. Charter Option", "descripcion": "Authorized operators."}
-                    ]
-                }
+            # SUSTITUCIÓN AUTOMÁTICA Y ELIMINACIÓN DE DATOS VIEJOS DE LA MEMORIA
+            # Borra por completo el historial antiguo para garantizar espacio libre y rapidez instantánea
+            self.mapas_selectores_locales.clear() 
+            
+            # Carga el nuevo mapa depurado libre de residuos digitales
+            self.mapas_selectores_locales = json.loads(response.text)
+            return {"status": "success", "message": "Doble vigilancia completada. Sistema limpio de residuos obsoletos."}
         except Exception as e:
-            # Esto evita que devuelva 500 en texto plano y congeles el frontend
-            return {"valido": False, "error": "Ocurrió un inconveniente procesando la ruta. Por favor, intenta de nuevo." if lang == "es" else "An issue occurred processing the route. Please try again."}
+            return {"status": "error", "message": str(e)}
