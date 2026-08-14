@@ -9,7 +9,7 @@ HTML_INDEX = """<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AL CIELO - Asistencia de Viaje Profesional</title>
+    <title>AL CIELO - Asistencia Profesional de Viaje</title>
     <style>
         body, html {
             margin: 0; padding: 0; height: 100%;
@@ -83,6 +83,16 @@ HTML_INDEX = """<!DOCTYPE html>
             0% { transform: scale(1.0); background-color: #a8dadc; }
             50% { transform: scale(1.3); background-color: #457b9d; }
             100% { transform: scale(1.0); background-color: #a8dadc; }
+        }
+        /* Consola de acompañamiento invisible/discreta fuera de Google para no interferir jamás */
+        #companion-console {
+            margin-top: 15px;
+            padding: 12px;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 13px;
+            text-align: left;
         }
     </style>
 </head>
@@ -181,19 +191,21 @@ HTML_INDEX = """<!DOCTYPE html>
         </div>
     </div>
 
-    <!-- VISTA 3: RELAJACIÓN Y APERTURA DE GOOGLE EN PESTAÑA LIMPIA (SIN INTERFERENCIAS) -->
+    <!-- VISTA 3: RELAJACIÓN Y APERTURA DE GOOGLE EN PESTAÑA LIBRE (CON CONSOLA DE APOYO EN SEGUNDO PLANO) -->
     <div id="view-loading" class="hidden">
         <h2 id="load-title">Preparando Tu Tranquilidad</h2>
-        <p id="load-desc" style="color: #555; font-size: 13px; line-height: 1.4;">Inhala profundo. Abriremos Google Flights en una pestaña limpia y totalmente libre, con el micrófono abierto operando en paralelo para asistirte por voz sin tocar Google.</p>
+        <p id="load-desc" style="color: #555; font-size: 13px; line-height: 1.4;">Inhala profundo. Al abrir Google Flights en pestaña libre, esta pestaña mantendrá su micrófono inteligente activo por detrás para escucharte, apoyarte y acompañarte en todo lo que necesites sin tocar ni invadir Google.</p>
         
         <div id="breathing-circle"><span id="breath-txt">Inhala calma</span></div>
         
-        <div style="background: #e8f4fd; border: 1px solid #bbe1fa; padding: 10px; border-radius: 6px; font-size: 12px; color: #004080; margin: 10px 0; text-align: left; line-height: 1.4;">
-            🎙️ <strong>MICRÓFONO ABIERTO Y ACTIVO:</strong> Di <em>"Pausa"</em> o <em>"Pause"</em> para silenciar el asistente, y <em>"Continúa"</em> o <em>"Continue"</em> para reactivarlo en cualquier momento.
+        <div id="companion-console">
+            <p style="margin: 0 0 6px 0; color: #004080; font-weight: bold;">🎙️ Centro de Acompañamiento por Voz en Segundo Plano:</p>
+            <p id="status-mic-text" style="margin: 0; color: #28a745; font-weight: bold;">● Micrófono Inteligente Abierto y Escuchando</p>
+            <p style="margin: 6px 0 0 0; font-size: 12px; color: #666;">Di <em>"Pausa"</em> o <em>"Pause"</em> para silenciar, o <em>"Continúa"</em> o <em>"Continue"</em> para reactivar. Si hablas de vuelos, equipaje, conexiones o dudas, el asesor te apoyará al instante. Si hablas de otro tema ajeno, guardará silencio absoluto.</p>
         </div>
 
         <div style="margin-top: 15px;">
-            <button class="btn-success" onclick="abrirGooglePestanaLibre()">✈️ ABRIR GOOGLE FLIGHTS LIBRE Y ACTIVAR VOZ</button>
+            <button class="btn-success" onclick="abrirGooglePestanaLibreYActivarAsistente()">✈️ ABRIR GOOGLE FLIGHTS EN PESTAÑA LIBRE</button>
         </div>
     </div>
 </div>
@@ -334,21 +346,21 @@ function prepararConexionRespiratoria() {
     iniciarCicloRespiratorioDinamico();
 }
 
-function abrirGooglePestanaLibre() {
+function abrirGooglePestanaLibreYActivarAsistente() {
     if (breathInterval) {
         clearInterval(breathInterval);
         breathInterval = null;
     }
     
-    // Abrir Google Flights en una nueva pestaña totalmente limpia, libre de widgets e inyecciones para que Google trabaje al 100%
+    // Abre Google Flights en pestaña totalmente independiente y libre (cero interferencias en Google)
     window.open(urlGoogleFlightsGlobal, '_blank');
     
-    // Mantener activo el reconocimiento de voz en esta misma pestaña de asesoría (sin contaminar la pantalla de Google)
-    iniciarReconocimientoVozAbierto();
-    hablarVozClara(currentLang === 'es' ? "Google Flights abierto en pestaña libre. Te escucho aquí para orientarte." : "Google Flights opened in free tab. Listening here to guide you.");
+    // Inicia el reconocimiento inteligente en esta pestaña de asesoría en segundo plano
+    iniciarReconocimientoVozInteligente();
+    hablarVozClara(currentLang === 'es' ? "Google Flights abierto. Estoy aquí en segundo plano escuchándote para apoyarte." : "Google Flights opened. I am here in the background listening to support you.");
 }
 
-function iniciarReconocimientoVozAbierto() {
+function iniciarReconocimientoVozInteligente() {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) return;
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
     recognition = new SpeechRec();
@@ -359,21 +371,41 @@ function iniciarReconocimientoVozAbierto() {
     recognition.onresult = (event) => {
         let textoDicho = event.results[event.resultIndex][0].transcript.toLowerCase().trim();
         
+        // 1. Control de pausa / continuar por voz
         if (textoDicho.includes("pausa") || textoDicho.includes("pause") || textoDicho.includes("silencio") || textoDicho.includes("stop")) {
             micActive = false;
+            document.getElementById('status-mic-text').innerText = currentLang === 'es' ? "● Micrófono en Pausa" : "● Microphone Paused";
+            document.getElementById('status-mic-text').style.color = "#dc3545";
             hablarVozClara(currentLang === 'es' ? "Micrófono en pausa." : "Microphone paused.");
             return;
         }
         
         if (textoDicho.includes("continúa") || textoDicho.includes("continua") || textoDicho.includes("continue") || textoDicho.includes("enciende") || textoDicho.includes("start")) {
             micActive = true;
+            document.getElementById('status-mic-text').innerText = currentLang === 'es' ? "● Micrófono Inteligente Abierto y Escuchando" : "● Smart Microphone Open & Listening";
+            document.getElementById('status-mic-text').style.color = "#28a745";
             hablarVozClara(currentLang === 'es' ? "Micrófono reactivado." : "Microphone active.");
             return;
         }
 
         if (!micActive) return;
 
-        procesarDuaVozSegundoplano(textoDicho);
+        // 2. Filtro estricto: Solo responde si la consulta está relacionada con vuelos, viajes, equipaje, conexiones o asistencia. Si es ajeno, silencio total.
+        let esTemaDeVuelo = 
+            textoDicho.includes("vuelo") || textoDicho.includes("flight") ||
+            textoDicho.includes("maleta") || textoDicho.includes("bag") || textoDicho.includes("equipaje") ||
+            textoDicho.includes("precio") || textoDicho.includes("price") || textoDicho.includes("asiento") || textoDicho.includes("seat") ||
+            textoDicho.includes("escala") || textoDicho.includes("layover") || textoDicho.includes("aerolínea") || textoDicho.includes("airline") ||
+            textoDicho.includes("seguro") || textoDicho.includes("insurance") || textoDicho.includes("pago") || textoDicho.includes("pay") ||
+            textoDicho.includes("ayuda") || textoDicho.includes("help") || textoDicho.includes("duda") || textoDicho.includes("question") ||
+            textoDicho.includes("cambio") || textoDicho.includes("change") || textoDicho.includes("cancelar") || textoDicho.includes("cancel");
+
+        if (!esTemaDeVuelo) {
+            // Silencio absoluto si no es del tema, evitando respuestas repetitivas o impertinentes.
+            return;
+        }
+
+        procesarAsesoriaVueloPorVoz(textoDicho);
     };
 
     recognition.onend = () => {
@@ -382,20 +414,24 @@ function iniciarReconocimientoVozAbierto() {
     try { recognition.start(); } catch(e) {}
 }
 
-function procesarDuaVozSegundoplano(pregunta) {
+function procesarAsesoriaVueloPorVoz(pregunta) {
     let lower = pregunta.toLowerCase();
     let respuesta = currentLang === 'es'
-        ? "Revisa con calma las opciones en la pantalla de Google. Si te piden un pago o equipaje extra opcional, desmárcalo si no lo deseas."
-        : "Check options calmly on Google screen. If they ask for optional extra baggage, uncheck it if you don't wish to pay extra.";
+        ? "Revisa con calma las opciones en tu pantalla de Google. Si te ofrecen extras opcionales como seguros o asientos preferenciales y no los deseas, puedes desmarcarlos."
+        : "Check options calmly on your Google screen. If optional extras like insurance or preferred seats are offered and you don't wish to pay, you can uncheck them.";
     
     if (lower.includes("seguro") || lower.includes("insurance")) {
         respuesta = currentLang === 'es'
-            ? "El seguro es opcional. Búscalo en la pantalla y desmárcalo si prefieres no contratarlo."
-            : "Insurance is optional. Look for it on screen and uncheck it if you prefer not to take it.";
+            ? "El seguro de viaje suele ser opcional. Verifica si aparece seleccionado y desmárcalo si prefieres no incluirlo."
+            : "Travel insurance is usually optional. Check if it's selected and uncheck it if you prefer not to include it.";
     } else if (lower.includes("maleta") || lower.includes("equipaje") || lower.includes("bag")) {
         respuesta = currentLang === 'es'
-            ? "Verifica las condiciones de la tarifa. Si solo incluye artículo personal, asegúrate de no exceder las medidas."
-            : "Check fare conditions. If it only includes a personal item, make sure not to exceed dimensions.";
+            ? "Asegúrate de revisar qué incluye la tarifa base. Las tarifas económicas más económicas a menudo solo incluyen artículo personal."
+            : "Make sure to check what the base fare includes. Economy fares often only include a personal item.";
+    } else if (lower.includes("escala") || lower.includes("connection") || lower.includes("layover")) {
+        respuesta = currentLang === 'es'
+            ? "Revisa el tiempo de conexión entre vuelos; procura que tengas al menos dos horas para viajar con tranquilidad."
+            : "Check the connection time between flights; ensure you have at least two hours to travel with peace of mind.";
     }
     
     hablarVozClara(respuesta);
@@ -463,7 +499,7 @@ function setLanguage(lang) {
     document.getElementById('form-desc').innerText = t.formDesc;
     document.getElementById('lbl-origen').innerText = t.lblOrigen;
     document.getElementById('lbl-destino').innerText = t.lblDestino;
-    document.getElementById('lbl-salldas' in t ? 'lbl-salidas' : 'lbl-salida').innerText = t.lblSalida;
+    document.getElementById('lbl-salida').innerText = t.lblSalida;
     document.getElementById('lbl-regreso').innerText = t.lblRegreso;
     document.getElementById('lbl-tipo').innerText = t.lblTipo;
     document.getElementById('lbl-clase').innerText = t.lblClase;
