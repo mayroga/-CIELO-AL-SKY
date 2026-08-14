@@ -3,162 +3,68 @@ import requests
 
 class AsesorKernel:
     def __init__(self):
+        self.iata_db = {
+            "LA HABANA": "HAV", "CUBA": "HAV", "HAVANA": "HAV", "HAV": "HAV",
+            "MIAMI": "MIA", "MIAMI FL": "MIA", "MIA": "MIA",
+            "BOGOTA": "BOG", "BOG": "BOG",
+            "CANCUN": "CUN", "CUN": "CUN",
+            "MEXICO": "MEX", "MEX": "MEX",
+            "NUEVA YORK": "JFK", "NEW YORK": "JFK", "JFK": "JFK",
+            "PANAMA": "PTY", "PTY": "PTY"
+        }
         self.aerolineas_autorizadas = {
-            "Copa Airlines": "https://www.copaair.com",
-            "Avianca": "https://www.avianca.com",
-            "American Airlines": "https://www.aa.com",
-            "JetBlue": "https://www.jetblue.com",
-            "Southwest": "https://www.southwest.com",
-            "Delta Air Lines": "https://www.delta.com",
-            "Volaris": "https://www.volaris.com",
-            "Viva Aerobus": "https://www.vivaaerobus.com",
-            "Aeroméxico": "https://www.aeromexico.com",
-            "Wingo": "https://www.wingo.com",
-            "Cubazul Air Charter": "https://www.cubazulair.com",
-            "Xael Charter": "https://www.xaelcharter.com",
+            "Copa Airlines": "https://www.copaair.com", "Avianca": "https://www.avianca.com",
+            "American Airlines": "https://www.aa.com", "JetBlue": "https://www.jetblue.com",
+            "Southwest": "https://www.southwest.com", "Delta Air Lines": "https://www.delta.com",
+            "Volaris": "https://www.volaris.com", "Viva Aerobus": "https://www.vivaaerobus.com",
+            "Aeroméxico": "https://www.aeromexico.com", "Wingo": "https://www.wingo.com",
+            "Cubazul Air Charter": "https://www.cubazulair.com", "Xael Charter": "https://www.xaelcharter.com",
             "Aerocuba": "https://www.aerocuba.com"
         }
         self.session_active = False
 
-        self.frases_render_es = [
-            "Buscando vuelos disponibles con calma, ya casi encontramos las mejores opciones.",
-            "Conectando de forma segura con los sistemas de aerolíneas, un momento por favor.",
-            "Todo marcha de maravilla, cotizando cada ruta y conexión con precisión.",
-            "Ya casi terminamos de rastrear los pasajes perfectos para tu viaje."
-        ]
-        self.frases_render_en = [
-            "Searching for available flights calmly, we are almost finding the best options.",
-            "Connecting securely with airline systems, just a moment please.",
-            "Everything is going wonderfully, quoting each route and connection with precision.",
-            "We are almost finished tracking down the perfect tickets for your journey."
-        ]
-
-        self.frases_respiracion_es = [
-            "Sueltas el control de lo que no puedes cambiar. Inhala despacio... y exhala suave.",
-            "Todo está fluyendo de manera correcta. Mantén la calma, ya estamos encontrando tu vuelo.",
-            "Respira hondo como un roble fuerte. Cada latido te acerca más a tu destino."
-        ]
-        self.frases_respiracion_en = [
-            "You release control of what you cannot change. Inhale slowly... and exhale softly.",
-            "Everything is flowing correctly. Stay calm, we are already finding your flight.",
-            "Breathe deeply like a strong tree. Every heartbeat brings you closer to your destination."
-        ]
-
-    def obtener_url_aerolinea(self, nombre):
-        return self.aerolineas_autorizadas.get(nombre)
-
-    def validar_datos_entrada(self, nombre: str, pasaporte: str, lang: str = "es"):
-        if any(char.isdigit() for char in nombre):
-            if lang == "es":
-                return {"valido": False, "error": "¡Opa! Pusiste un número dentro del cuadro de tu nombre. Los nombres solo llevan letras, quita ese número para continuar."}
-            else:
-                return {"valido": False, "error": "Oops! You put a number in your name box. Names only have letters, please remove the number to continue."}
-        
-        if not nombre.strip() or not pasaporte.strip():
-            if lang == "es":
-                return {"valido": False, "error": "Te saltaste un espacio importante. Por favor escribe tu nombre y pasaporte para continuar."}
-            else:
-                return {"valido": False, "error": "You missed an important space. Please write your name and passport to continue."}
-
-        if lang == "es":
-            return {"valido": True, "mensaje": "¡Listo! Tus datos están correctos."}
-        else:
-            return {"valido": True, "mensaje": "Ready! Your data is correct."}
-
-    def traducir_itinerario(self, origen: str, escala: str, destino: str, horas_escala: str, lang: str = "es"):
-        if lang == "es":
-            salida = f"Vuelo inicial saliendo desde {origen} con destino al punto de conexión en {escala}."
-            estancia = f"Escala confirmada en {escala} con un tiempo de espera de {horas_escala}. Gestión automática de equipaje en tránsito asegurada por la aerolínea."
-            llegada = f"Vuelo de conexión desde {escala} con llegada final y directa a {destino}."
-            return {"paso_1": salida, "paso_2": estancia, "paso_3": llegada}
-        else:
-            salida = f"Initial flight departing from {origen} to the connection point in {escala}."
-            estancia = f"Confirmed layover in {escala} with a wait time of {horas_escala}. Automatic luggage transfer in transit handled by the airline."
-            llegada = f"Connecting flight from {origen if not escala else escala} with final direct arrival to {destino}."
-            return {"paso_1": salida, "paso_2": estancia, "paso_3": llegada}
+    def normalizar_lugar(self, texto: str):
+        return self.iata_db.get(texto.upper().strip())
 
     def obtener_opciones_vuelo(self, origen: str, destino: str, escala: str = "", lang: str = "es"):
+        # 1. Normalización Invisible (El cliente no sabe que esto ocurre)
+        origen_code = self.normalizar_lugar(origen)
+        destino_code = self.normalizar_lugar(destino)
+
+        # 2. Validación de rectificación (Si no existe en la DB, pedimos corrección)
+        if not origen_code or not destino_code:
+            error_msg = "No reconozco esa ciudad. Por favor, rectifica el origen o destino para poder asistirte." if lang == "es" else "I don't recognize that city. Please rectify the origin or destination to assist you."
+            return {"valido": False, "error": error_msg}
+
+        # 3. Consulta a API con códigos IATA normalizados
         token = os.getenv("TRAVELPAYOUTS_API_TOKEN")
-        
         precios_encontrados = []
+        
         if token:
             try:
                 url = "https://api.travelpayouts.com/v1/prices/cheap"
-                params = {
-                    "origin": origen.upper(),
-                    "destination": destino.upper(),
-                    "token": token,
-                    "currency": "USD"
-                }
+                params = {"origin": origen_code, "destination": destino_code, "token": token, "currency": "USD"}
                 response = requests.get(url, params=params, timeout=5)
                 if response.status_code == 200:
                     data = response.json().get("data", {})
-                    if destino.upper() in data:
-                        vuelos_dict = data[destino.upper()]
-                        for k, v in vuelos_dict.items():
+                    if destino_code in data:
+                        for k, v in data[destino_code].items():
                             precios_encontrados.append({
                                 "precio": v.get("price"),
                                 "aerolinea": v.get("airline"),
-                                "enlace": f"https://www.aviasales.com/search/{origen}{destino}1"
+                                "enlace": f"https://www.aviasales.com/search/{origen_code}{destino_code}1"
                             })
                         precios_encontrados = sorted(precios_encontrados, key=lambda x: x["precio"])
             except Exception:
                 pass
 
+        # 4. Respuesta con datos encontrados o respaldo
         if precios_encontrados:
-            opciones_dinamicas = []
-            for idx, item in enumerate(precios_encontrados[:8], 1):
-                opciones_dinamicas.append({
-                    "titulo": f"Opción {idx} - Tarifa: ${item['precio']} USD",
-                    "descripcion": f"Aerolínea operadora: {item['aerolinea']}. Ruta directa o en conexión hacia {destino} con total respaldo y asesoría."
-                })
-            return {
-                "ruta": f"{origen} -> {escala + ' -> ' if escala else ''}{destino}",
-                "opciones": opciones_dinamicas
-            }
+            opciones = [{"titulo": f"Opción {idx} - Tarifa: ${item['precio']} USD", "descripcion": f"Aerolínea: {item['aerolinea']}. Ruta con respaldo."} for idx, item in enumerate(precios_encontrados[:8], 1)]
+            return {"ruta": f"{origen_code} -> {destino_code}", "opciones": opciones}
 
-        # Respaldo si no hay token o no retorna datos inmediatos
+        # Respaldo (Si la API no tiene datos o falla)
         if lang == "es":
-            return {
-                "ruta": f"{origen} -> {escala + ' -> ' if escala else ''}{destino}",
-                "opciones": [
-                    {
-                        "titulo": "1. Opción Económica (Conexión / Vuelo Regular)",
-                        "descripcion": f"Vuelo optimizado para buscar la tarifa más baja disponible en rutas hacia {destino}, gestionando escalas de forma eficiente."
-                    },
-                    {
-                        "titulo": "2. Opción Protegida (Aerolíneas Autorizadas)",
-                        "descripcion": "Incluye cobertura de equipaje y respaldo directo con aerolíneas aliadas (como Copa, Avianca, American Airlines, entre otras)."
-                    },
-                    {
-                        "titulo": "3. Opción Directa / Especial",
-                        "descripcion": f"Búsqueda prioritaria de vuelos directos o con el menor tiempo de tránsito posible hacia {destino}."
-                    },
-                    {
-                        "titulo": "4. Opción Charter / Alternativa",
-                        "descripcion": "Opciones adicionales a través de operadores autorizados (Cubazul, Xael, Aerocuba) según disponibilidad de ruta."
-                    }
-                ]
-            }
+            return {"ruta": f"{origen} -> {destino}", "opciones": [{"titulo": "1. Opción Económica", "descripcion": "Vuelo optimizado hacia " + destino}, {"titulo": "2. Opción Protegida", "descripcion": "Respaldo con aerolíneas aliadas."}, {"titulo": "3. Opción Directa", "descripcion": "Búsqueda prioritaria."}, {"titulo": "4. Opción Charter", "descripcion": "Operadores autorizados."}]}
         else:
-            return {
-                "ruta": f"{origen} -> {escala + ' -> ' if escala else ''}{destino}",
-                "opciones": [
-                    {
-                        "titulo": "1. Economic Option (Connection / Regular Flight)",
-                        "descripcion": f"Optimized flight looking for the lowest available fare on routes to {destino}, managing connections efficiently."
-                    },
-                    {
-                        "titulo": "2. Protected Option (Authorized Airlines)",
-                        "descripcion": "Includes luggage coverage and direct support with partner airlines (such as Copa, Avianca, American Airlines, etc.)."
-                    },
-                    {
-                        "titulo": "3. Direct / Special Option",
-                        "descripcion": f"Priority search for direct flights or with the shortest transit time to {destino}."
-                    },
-                    {
-                        "titulo": "4. Charter / Alternative Option",
-                        "descripcion": "Additional options through authorized operators based on route availability."
-                    }
-                ]
-            }
+            return {"ruta": f"{origen} -> {destino}", "opciones": [{"titulo": "1. Economic Option", "descripcion": "Optimized flight to " + destino}, {"titulo": "2. Protected Option", "descripcion": "Support with partner airlines."}, {"titulo": "3. Direct Option", "descripcion": "Priority search."}, {"titulo": "4. Charter Option", "descripcion": "Authorized operators."}]}
