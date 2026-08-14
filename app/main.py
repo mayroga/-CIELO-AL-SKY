@@ -1,22 +1,42 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-import time
+from fastapi import FastAPI, Request, Form
+from fastapi.responses import HTMLResponse, JSONResponse
+import os
+
+from app.kernel import AsesorKernel
 
 app = FastAPI()
+kernel = AsesorKernel()
 
-# La sesión en el servidor es puramente operativa y no guarda datos de usuario.
-# El control del tiempo de 8 minutos se gestiona en la interfaz (cliente)
-# para asegurar la destrucción total de datos volátiles.
-
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 async def get_index():
-    # Retorna la interfaz inicial con el control de tiempo integrado
-    return {"message": "Sistema Híbrido AL CIELO - Sesión Activa"}
+    index_path = os.path.join("app", "index.html")
+    if os.path.exists(index_path):
+        with open(index_path, "r", encoding="utf-8") as f:
+            return f.read()
+    return "<h1>Error: index.html no encontrado</h1>"
+
+@app.get("/frases_render")
+async def obtener_frases_render(lang: str = "es"):
+    if lang == "es":
+        return {"frases": kernel.frases_render_es}
+    return {"frases": kernel.frases_render_en}
+
+@app.get("/frases_respiracion")
+async def obtener_frases_respiracion(lang: str = "es"):
+    if lang == "es":
+        return {"frases": kernel.frases_respiracion_es}
+    return {"frases": kernel.frases_respiracion_en}
+
+@app.post("/validar")
+async def validar_datos_endpoint(nombre: str = Form(...), pasaporte: str = Form(...), lang: str = Form("es")):
+    resultado = kernel.validar_datos_entrada(nombre, pasaporte, lang)
+    return JSONResponse(content=resultado)
+
+@app.post("/traducir_itinerario")
+async def traducir_itinerario_endpoint(origen: str = Form(...), escala: str = Form(...), destino: str = Form(...), horas_escala: str = Form(...), lang: str = Form("es")):
+    resultado = kernel.traducir_itinerario(origen, escala, destino, horas_escala, lang)
+    return JSONResponse(content=resultado)
 
 @app.post("/destroy_session")
 async def destroy_session():
-    # Comando de cierre limpio solicitado por el Plan Maestro
-    # En este punto el servidor confirma la limpieza de cualquier residuo en RAM
     return {"status": "session_destroyed", "message": "Memoria RAM limpiada"}
