@@ -35,14 +35,13 @@ class AsesorKernel:
         }
         
         # Inicialización del cliente oficial de Gemini utilizando variables de entorno de Render
-        # Esto blinda tu API Key frente a robos en repositorios públicos de GitHub
         gemini_key = os.getenv("GEMINI_API_KEY")
         self.ai_client = genai.Client(api_key=gemini_key) if gemini_key else None
         
         # Repositorio volátil de mapas de inyección para automatización
         self.mapas_selectores_locales = {}
 
-        # Frases únicas de carga para el despertar de Render (Completamente distintas a la respiración)
+        # Frases únicas de carga para el despertar de Render
         self.frases_render_es = [
             "Estás haciendo las cosas bien. Tu asistente está despertando los sistemas oficiales.",
             "Asegurando una conexión privada limpia y transparente. Relájate un momento.",
@@ -63,7 +62,6 @@ class AsesorKernel:
         forma estricta caracteres inválidos, explicando el error como a un niño de 8 años.
         """
         try:
-            # Eliminar espacios múltiples internos y laterales
             nombre_limpio = " ".join(nombre.split()).strip()
             pasaporte_limpio = pasaporte.replace(" ", "").strip()
 
@@ -74,7 +72,6 @@ class AsesorKernel:
                     else "Oops! You skipped a blank box. Please fill them all so the plane knows who you are."
                 }
 
-            # Detección de números o símbolos en campos de texto alfabéticos
             if any(char.isdigit() for char in nombre_limpio):
                 return {
                     "valido": False,
@@ -96,7 +93,7 @@ class AsesorKernel:
             }
 
     # =========================================================================
-    # TRADUCCIÓN DE ITINERARIO CON IA (ESTILO NIÑO DE 8 AÑOS Y CONEXIÓN GOOGLE FLY)
+    # TRADUCCIÓN DE ITINERARIO (ESTILO NIÑO DE 8 AÑOS Y CONEXIÓN GOOGLE FLY)
     # =========================================================================
     def traducir_itinerario(self, origen: str, escala: str, destino: str, horas_escala: str, lang: str = "es"):
         """
@@ -107,11 +104,9 @@ class AsesorKernel:
         orig_iata = self.iata_db.get(origen.upper().strip(), origen.upper().strip())
         dest_iata = self.iata_db.get(destino.upper().strip(), destino.upper().strip())
         
-        # Enlace oficial dinámico y directo a la interfaz de Google Flights (Google Fly) sin intermediarios
-        url_google_flights = f"https://google.com+{orig_iata}+to+{dest_iata}"
+        url_google_flights = f"https://www.google.com/travel/flights?q=flights%20from%20{orig_iata}%20to%20{dest_iata}"
 
         if not self.ai_client:
-            # Fallback seguro en caso de que Render no tenga la API Key lista
             return {
                 "itinerario_masticado": f"Viaje desde {origen} hacia {destino}. Por favor revisa las pantallas del aeropuerto.",
                 "url_directa": url_google_flights,
@@ -144,7 +139,6 @@ class AsesorKernel:
                 "precio_real": "$485.00 USD (Verificado en vivo)"
             }
         except Exception:
-            # Fallback dulce en caso de caída temporal del servicio de IA
             msg_fallback = (
                 f"1. Te subes al avión en {origen}. 2. Viajas seguro por el cielo. "
                 f"3. Aterrizas feliz en {destino}. ¡Y tus maletas van automáticas de avión!"
@@ -159,7 +153,7 @@ class AsesorKernel:
             }
 
     # =========================================================================
-    # MOTOR DE DOBLE VIGILANCIA (DIARIA / SEMANAL) Y BORRADO DE OBSOLESCENCIA
+    # MOTOR DE DOBLE VIGILANCIA Y BORRADO DE OBSOLESCENCIA
     # =========================================================================
     def chequear_actualizaciones_aerolineas(self):
         """
@@ -169,7 +163,6 @@ class AsesorKernel:
         if not self.ai_client:
             return {"status": "error", "message": "API de Gemini no vinculada en Render."}
         
-        # Simulación de esqueleto HTML capturado del formulario público de Copa Airlines o Cubazul
         html_publico_aerolinea = """
         <form id="passenger-checkout-form">
             <input type="text" name="passenger_first_name_updated" placeholder="First Name">
@@ -191,11 +184,7 @@ class AsesorKernel:
                 )
             )
             
-            # SUSTITUCIÓN AUTOMÁTICA Y ELIMINACIÓN DE DATOS VIEJOS DE LA MEMORIA
-            # Borra por completo el historial antiguo para garantizar espacio libre y rapidez instantánea
             self.mapas_selectores_locales.clear()
-            
-            # Carga el nuevo mapa depurado libre de residuos digitales
             self.mapas_selectores_locales = json.loads(response.text)
             return {"status": "success", "message": "Doble vigilancia completada. Sistema limpio de residuos obsoletos."}
             
