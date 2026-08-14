@@ -18,27 +18,27 @@ class AsesorKernel:
         self.session_active = False
 
         self.frases_render_es = [
-            "Despertando los motores con calma, ya casi estamos listos para ti.",
-            "Conectando de forma segura con el servidor de tu viaje, un momento por favor.",
-            "Todo marcha de maravilla, preparando cada detalle con cariño.",
-            "Ya casi terminamos de acomodar todo para que tu camino sea perfecto."
+            "Buscando vuelos disponibles con calma, ya casi encontramos las mejores opciones.",
+            "Conectando de forma segura con los sistemas de aerolíneas, un momento por favor.",
+            "Todo marcha de maravilla, cotizando cada ruta y conexión con precisión.",
+            "Ya casi terminamos de rastrear los pasajes perfectos para tu viaje."
         ]
         self.frases_render_en = [
-            "Waking up the engines calmly, we are almost ready for you.",
-            "Connecting securely to your travel server, just a moment please.",
-            "Everything is going wonderfully, preparing every detail with care.",
-            "We are almost finished getting everything ready so your journey is perfect."
+            "Searching for available flights calmly, we are almost finding the best options.",
+            "Connecting securely with airline systems, just a moment please.",
+            "Everything is going wonderfully, quoting each route and connection with precision.",
+            "We are almost finished tracking down the perfect tickets for your journey."
         ]
 
         self.frases_respiracion_es = [
             "Sueltas el control de lo que no puedes cambiar. Inhala despacio... y exhala suave.",
-            "Todo está fluyendo de manera correcta. Mantén la calma, ya estás muy cerca de casa.",
-            "Respira hondo como un roble fuerte. Cada latido te acerca más a los tuyos."
+            "Todo está fluyendo de manera correcta. Mantén la calma, ya estamos encontrando tu vuelo.",
+            "Respira hondo como un roble fuerte. Cada latido te acerca más a tu destino."
         ]
         self.frases_respiracion_en = [
             "You release control of what you cannot change. Inhale slowly... and exhale softly.",
-            "Everything is flowing correctly. Stay calm, you are very close to home.",
-            "Breathe deeply like a strong tree. Every heartbeat brings you closer to your loved ones."
+            "Everything is flowing correctly. Stay calm, we are already finding your flight.",
+            "Breathe deeply like a strong tree. Every heartbeat brings you closer to your destination."
         ]
 
     def obtener_url_aerolinea(self, nombre):
@@ -47,73 +47,76 @@ class AsesorKernel:
     def validar_datos_entrada(self, nombre: str, pasaporte: str, lang: str = "es"):
         if any(char.isdigit() for char in nombre):
             if lang == "es":
-                return {"valido": False, "error": "¡Opa! Pusiste un número dentro del cuadro de tu nombre. Los nombres solo llevan letras bonitas, quita ese número para que podamos continuar."}
+                return {"valido": False, "error": "¡Opa! Pusiste un número dentro del cuadro de tu nombre. Los nombres solo llevan letras, quita ese número para continuar."}
             else:
-                return {"valido": False, "error": "Oops! You put a number in your name box. Names only have beautiful letters, please remove the number so we can continue."}
+                return {"valido": False, "error": "Oops! You put a number in your name box. Names only have letters, please remove the number to continue."}
         
         if not nombre.strip() or not pasaporte.strip():
             if lang == "es":
-                return {"valido": False, "error": "Te saltaste un espacio importante. Eso es como la llave de tu puerta, por favor escríbelo para que todo salga perfecto."}
+                return {"valido": False, "error": "Te saltaste un espacio importante. Por favor escribe tu nombre y pasaporte para continuar."}
             else:
-                return {"valido": False, "error": "You missed an important space. That is like your door key, please write it down so everything comes out perfect."}
+                return {"valido": False, "error": "You missed an important space. Please write your name and passport to continue."}
 
         if lang == "es":
-            return {"valido": True, "mensaje": "¡Listo! Tus datos están limpios y perfectos."}
+            return {"valido": True, "mensaje": "¡Listo! Tus datos están correctos."}
         else:
-            return {"valido": True, "mensaje": "Ready! Your data is clean and perfect."}
+            return {"valido": True, "mensaje": "Ready! Your data is correct."}
 
     def traducir_itinerario(self, origen: str, escala: str, destino: str, horas_escala: str, lang: str = "es"):
         if lang == "es":
-            salida = f"Te subes al primer avioncito en la linda ciudad de {origen}."
-            estancia = f"Este avión aterriza en el aeropuerto de {escala}. Allí te vas a bajar tranquilamente y vas a esperar sentado o caminando un ratito durante {horas_escala}. No tienes que arrastrar tus maletas grandes; la aerolínea las cuida y las cambia de avión por ti mientras descansas."
-            llegada = f"Te subes al segundo avión en ese mismo lugar y este te lleva derechito a tu destino final en {destino}. ¡Llegaste a los brazos de los tuyos!"
+            salida = f"Vuelo inicial saliendo desde {origen} con destino al punto de conexión en {escala}."
+            estancia = f"Escala confirmada en {escala} con un tiempo de espera de {horas_escala}. Gestión automática de equipaje en tránsito asegurada por la aerolínea."
+            llegada = f"Vuelo de conexión desde {escala} con llegada final y directa a {destino}."
             return {"paso_1": salida, "paso_2": estancia, "paso_3": llegada}
         else:
-            salida = f"You board the first little plane in the lovely city of {origen}."
-            estancia = f"This plane lands at the airport in {escala}. There you will get off calmly and wait sitting or walking a little bit for {horas_escala}. You do not have to drag your big suitcases; the airline takes care of them and moves them to your next plane while you rest."
-            llegada = f"You board the second plane at that same place and it takes you straight to your final destination in {destino}. You arrived safe and sound!"
+            salida = f"Initial flight departing from {origen} to the connection point in {escala}."
+            estancia = f"Confirmed layover in {escala} with a wait time of {horas_escala}. Automatic luggage transfer in transit handled by the airline."
+            llegada = f"Connecting flight from {origen if not escala else escala} with final direct arrival to {destino}."
             return {"paso_1": salida, "paso_2": estancia, "paso_3": llegada}
 
-    def obtener_opciones_vuelo(self, lang: str = "es"):
+    def obtener_opciones_vuelo(self, origen: str, destino: str, escala: str = "", lang: str = "es"):
+        # Lógica central de búsqueda de vuelos directos y de conexión con aerolíneas autorizadas
         if lang == "es":
             return {
+                "ruta": f"{origen} -> {escala + ' -> ' if escala else ''}{destino}",
                 "opciones": [
                     {
-                        "titulo": "1. La Opción Más Barata (Ahorro total)",
-                        "descripcion": "Aquí gastas la menor cantidad de dinero posible en tu pasaje. Te lleva a tu destino cuidando cada centavito de tu bolsillo."
+                        "titulo": "1. Opción Económica (Conexión / Vuelo Regular)",
+                        "descripcion": f"Vuelo optimizado para buscar la tarifa más baja disponible en rutas hacia {destino}, gestionando escalas de forma eficiente."
                     },
                     {
-                        "titulo": "2. La Opción con Seguro (Viaje protegido)",
-                        "descripcion": "Pagas un poquito más, pero ya viene con tu seguro médico y de maletas incluido por la aerolínea para que viajes sin ninguna preocupación."
+                        "titulo": "2. Opción Protegida (Aerolíneas Autorizadas)",
+                        "descripcion": "Incluye cobertura de equipaje y respaldo directo con aerolíneas aliadas (como Copa, Avianca, American Airlines, entre otras)."
                     },
                     {
-                        "titulo": "3. La Opción Especial (Vuelo directo y cómodo)",
-                        "descripcion": "Es el viaje directo, sin escalas cansadas, con los horarios más bonitos del día y con tu maleta grande ya lista para volar contigo."
+                        "titulo": "3. Opción Directa / Especial",
+                        "descripcion": f"Búsqueda prioritaria de vuelos directos o con el menor tiempo de tránsito posible hacia {destino}."
                     },
                     {
-                        "titulo": "4. La Opción a Tu Medida (Pedido especial)",
-                        "descripcion": "Si quieres algo diferente, me platicas exactamente cómo lo imaginas y buscamos un vuelo hecho a la medida solo para ti."
+                        "titulo": "4. Opción Charter / Alternativa",
+                        "descripcion": "Opciones adicionales a través de operadores autorizados (Cubazul, Xael, Aerocuba) según disponibilidad de ruta."
                     }
                 ]
             }
         else:
             return {
+                "ruta": f"{origen} -> {escala + ' -> ' if escala else ''}{destino}",
                 "opciones": [
                     {
-                        "titulo": "1. The Cheapest Option (Total savings)",
-                        "descripcion": "Here you spend the least possible money on your ticket. It takes you to your destination while taking care of every penny."
+                        "titulo": "1. Economic Option (Connection / Regular Flight)",
+                        "descripcion": f"Optimized flight looking for the lowest available fare on routes to {destino}, managing connections efficiently."
                     },
                     {
-                        "titulo": "2. The Option with Insurance (Protected trip)",
-                        "descripcion": "You pay a little more, but it already includes medical and luggage insurance from the airline so you can travel completely worry-free."
+                        "titulo": "2. Protected Option (Authorized Airlines)",
+                        "descripcion": "Includes luggage coverage and direct support with partner airlines (such as Copa, Avianca, American Airlines, etc.)."
                     },
                     {
-                        "titulo": "3. The Special Option (Direct and cozy flight)",
-                        "descripcion": "This is the direct trip, without tiring stops, with the nicest times of the day and with your large suitcase ready to fly with you."
+                        "titulo": "3. Direct / Special Option",
+                        "descripcion": f"Priority search for direct flights or with the shortest transit time to {destino}."
                     },
                     {
-                        "titulo": "4. Your Custom Option (Special request)",
-                        "descripcion": "If you want something different, tell me exactly how you picture it and we will find a flight tailored just for you."
+                        "titulo": "4. Charter / Alternative Option",
+                        "descripcion": "Additional options through authorized operators based on route availability."
                     }
                 ]
             }
