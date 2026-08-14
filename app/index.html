@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AL CIELO</title>
+</head>
+<body>
+    <div id="language-controls">
+        <button onclick="setLanguage('es')">Español</button>
+        <button onclick="setLanguage('en')">English</button>
+    </div>
+
+    <h1 id="title">AL CIELO</h1>
+    <button id="btn-entrar" onclick="speak(this.innerText)">Entrar</button>
+    <button id="btn-cerrar" onclick="speak(this.innerText)">Cerrar</button>
+
+    <script>
+        let currentLang = 'es';
+
+        const content = {
+            es: { title: "AL CIELO", enter: "Entrar", close: "Cerrar" },
+            en: { title: "AL CIELO", enter: "Enter", close: "Close" }
+        };
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.documentElement.lang = lang;
+            document.getElementById('title').innerText = content[lang].title;
+            document.getElementById('btn-entrar').innerText = content[lang].enter;
+            document.getElementById('btn-cerrar').innerText = content[lang].close;
+        }
+
+        // Función de voz nativa (Web Speech API)
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = currentLang === 'es' ? 'es-ES' : 'en-US';
+            window.speechSynthesis.speak(utterance);
+        }
+    </script>
+</body>
+</html>
