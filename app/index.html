@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OPEN THAN GO - Vuelos Protegidos</title>
+    <title>AL CIELO - Vuelos Protegidos</title>
     <style>
         body, html {
             margin: 0; padding: 0; height: 100%;
@@ -33,22 +33,22 @@
             background-color: #fff;
             transition: all 0.2s ease;
             width: 90%;
-    } 
-    #btn-maps-action { 
-        background-color: #4285f4; /* Google Maps blue original */
-        color: white; 
-        border: none; 
-        font-size: 18px; 
-        padding: 15px 30px; 
-        box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); 
-        width: 90%;
-        font-weight: bold;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: background-color 0.2s ease;
-    }
-    #btn-maps-action:hover { 
-        background-color: #357ae8;            
+        } 
+        #btn-maps-action { 
+            background-color: #4285f4; 
+            color: white; 
+            border: none; 
+            font-size: 18px; 
+            padding: 15px 30px; 
+            box-shadow: 0 4px 10px rgba(66, 133, 244, 0.3); 
+            width: 90%;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        #btn-maps-action:hover { 
+            background-color: #357ae8;            
         }
         .btn-primary { background-color: #004080; color: white; border: none; }
         .btn-primary:hover { background-color: #002d5a; }
@@ -68,7 +68,6 @@
         }
         input[type="text"]:focus { border-color: #004080; }
         
-        /* CONSOLA DE CHAT GUARDIÁN 24/7 */
         .guardian-console {
             background: #f8f9fa; border-radius: 10px; padding: 15px;
             margin: 20px 0; max-height: 250px; overflow-y: auto;
@@ -88,7 +87,7 @@
         <button onclick="setLanguage('en')" style="width:auto; padding:4px 8px; font-size:11px; margin:2px;">ENG</button>
     </div>
 
-    <!-- VISTA 1: EL CONTRATO DE MANDATO SOBERANO (PROTECCIÓN LEGAL TOTAL) -->
+    <!-- VISTA 1: EL CONTRATO DE MANDATO SOBERANO -->
     <div id="view-home">
         <h1 id="title">AL CIELO</h1>
         <p id="subtitle" style="color: #555;">Mecanismo Tecnológico Privado de Asistencia y Acompañamiento por Voz al Viajero.</p>
@@ -96,8 +95,8 @@
         <div style="text-align: left; background: #f8f9fa; border: 1px solid #ccc; padding: 12px; border-radius: 8px; max-height: 150px; overflow-y: auto; font-size: 12px; line-height: 1.4; margin: 15px 0; border-left: 4px solid #004080;">
             <p><strong>MANDATO TÉCNICO Y DECLARACIÓN DE DERECHOS:</strong></p>
             <p>Al marcar la casilla y entrar, usted declara voluntariamente lo siguiente:</p>
-            <p>1. Autoriza a esta aplicación para actuar como su copiloto informático de acompañamiento por voz durante su navegación libre en la plataforma de Google Flights.</p>
-            <p>2. El servicio es un asistente pasivo y volátil para mitigar el agobio y el cansancio mental; no recopila datos ni interfiere con los formularios de Google.</p>
+            <p>1. Autoriza a esta aplicación para actuar como su copiloto informático de acompañamiento por voz durante su navegación libre.</p>
+            <p>2. El servicio es un asistente pasivo y volátil para mitigar el agobio y el cansancio mental.</p>
         </div>
 
         <div style="margin: 15px 0; font-size: 13px; font-weight: bold;">
@@ -107,7 +106,8 @@
 
         <button id="btn-entrar" class="btn-primary" onclick="switchView('view-form')" disabled style="opacity: 0.5; cursor: not-allowed;">Acepto y Entrar</button>
     </div>
-    <!-- VISTA 2: CAPTURA DE RUTA SENCILLA PARA NIÑOS DE 8 AÑOS -->
+
+    <!-- VISTA 2: CAPTURA DE RUTA SENCILLA -->
     <div id="view-form" class="hidden">
         <h2 id="form-title">Detalles de tu Destino</h2>
         <p id="form-desc" style="color: #666; font-size: 14px;">Escribe las tres letras de tus aeropuertos de origen y destino:</p>
@@ -130,32 +130,32 @@
         <p id="load-sub" style="font-size: 13px; color: #888;">Relájate un momento mientras el escudo se activa de fondo.</p>
     </div>
     
-<!-- VISTA 4. REEMPLAZAR LA VISTA DE LANZAMIENTO COMPLETA POR ESTA INTERFAZ -->
-<div id="view-lanzamiento" class="hidden" style="text-align: center;">
-    <h2 style="color: #004080;">¡Tu Escudo Técnico Está Listo!</h2>
-    <p style="font-size: 15px; color: #444; line-height: 1.5; margin: 20px 0;">
-        Todo ha sido verificado con total certeza. Al presionar el botón oficial de abajo, se abrirán tus vuelos en una ventana flotante limpia de Google Flights de forma autorizada y tu asistente de voz se quedará escuchando para guiarte en el proceso de pago de forma segura:
-    </p>
-    
-    <!-- ACCIÓN FÍSICA DIRECTA QUE ELIMINA EL BLOQUEO DEL NAVEGADOR -->
-    <button id="btn-maps-action" onclick="lanzarVuelosYVoz()">🚀 GOOGLE FLY</button>
-    
-    <p style="font-size: 12px; color: #777; margin-top: 15px;" id="load-sub-legal">
-        Recomendación orientativa sujeta a revisión voluntaria del consumidor soberano.
-    </p>
-</div>
+    <!-- VISTA 4: INTERFAZ DE LANZAMIENTO -->
+    <div id="view-lanzamiento" class="hidden" style="text-align: center;">
+        <h2 style="color: #004080;">¡Tu Escudo Técnico Está Listo!</h2>
+        <p style="font-size: 15px; color: #444; line-height: 1.5; margin: 20px 0;">
+            Todo ha sido verificado con total certeza. Al presionar el botón oficial de abajo, se abrirán tus vuelos en una ventana limpia de forma autorizada y tu asistente de voz se quedará escuchando para guiarte de forma segura:
+        </p>
+        
+        <button id="btn-maps-action" onclick="lanzarVuelosYVoz()">🚀 GOOGLE FLY</button>
+        
+        <p style="font-size: 12px; color: #777; margin-top: 15px;" id="load-sub-legal">
+            Recomendación orientativa sujeta a revisión voluntaria del consumidor soberano.
+        </p>
+    </div>
+
     <!-- VISTA 5: CONSOLA DE ACOMPAÑAMIENTO CON MICRÓFONO ABIERTO Y TECLADO -->
     <div id="view-split" class="hidden">
-        <div class="guardian-header">Copiloto Protector 24/7</div>
-        <div class="guardian-body" id="chat-stream">
-            <div class="chat-bubble">¡Hola! Estoy aquí contigo en tu teléfono celular. Se ha abierto tu ventana oficial de Google Flights. Puedes hablarme o escribirme aquí si tienes dudas sobre campos de pago, maletas o seguros tramposos de las aerolíneas. Todo saldrá bien.</div>
+        <div class="guardian-header" style="font-weight: bold; color: #004080; margin-bottom: 10px;">Copiloto Protector 24/7</div>
+        <div class="guardian-console" id="chat-stream">
+            <div class="chat-bubble">¡Hola! Estoy aquí contigo en tu teléfono celular. Se ha abierto tu ventana oficial de vuelos. Puedes hablarme o escribirme aquí si tienes dudas sobre campos de pago, maletas o seguros. Todo saldrá bien.</div>
         </div>
         <div class="guardian-footer">
             <div class="control-row">
                 <button id="btn-mic-toggle" style="background: #28a745; color: white; border: none;" onclick="toggleMic()">🎙️ Micrófono ON</button>
             </div>
             <div style="font-size: 12px; color: #555; margin-bottom: 5px;" id="mic-status">Escuchando activamente...</div>
-            <div class="control-row">
+            <div class="control-row" style="display: flex; gap: 5px; justify-content: center;">
                 <input type="text" id="user-input-text" placeholder="Escribe tu duda si hay ruido..." onkeypress="handleKey(event)" style="width: 70%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; font-size: 14px; margin: 0;">
                 <button class="btn-primary" onclick="enviarTextoDuda()" style="width: auto; padding: 10px 15px; margin: 0;">Enviar</button>
             </div>
@@ -184,7 +184,7 @@ const translations = {
         loadSub: "Relájate un momento mientras el escudo se activa de fondo."
     },
     en: {
-        title: "TO THE SKY",
+        title: "AL CIELO",
         subtitle: "Private Technological Mechanism for Voice Assistance and Traveler Guidance.",
         entrar: "Accept & Enter",
         formTitle: "Your Destination Details",
@@ -238,7 +238,6 @@ function evaluarAceptacionLegal() {
 function speak(text) {
     if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
-        // FILTRO RECTIFICADOR DE AUDIO: Borra cualquier marca técnica de la voz
         let textoLimpio = text.replace(/<\/?[^>]+(>|$)/g, "").replace(/•/g, "").replace(/➔/g, "hacia");
         let utterance = new SpeechSynthesisUtterance(textoLimpio);
         utterance.lang = currentLang === 'es' ? 'es-ES' : 'en-US';
@@ -246,10 +245,11 @@ function speak(text) {
         window.speechSynthesis.speak(utterance);
     }
 }
-<script>
+
 function iniciarReconocimientoVoz() {
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-        document.getElementById('mic-status').innerText = "Voz no soportada.";
+        let statusEl = document.getElementById('mic-status');
+        if(statusEl) statusEl.innerText = "Voz no soportada.";
         return;
     }
     const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -260,7 +260,7 @@ function iniciarReconocimientoVoz() {
 
     recognition.onresult = (event) => {
         if (!micActive) return;
-        let textoDicho = event.results[event.resultIndex][event.transcript];
+        let textoDicho = event.results[event.resultIndex][0].transcript;
         agregarMensajeChat(currentLang === 'es' ? "Tú (voz): " + textoDicho : "You (voice): " + textoDicho);
         procesarRespuestaAsistente(textoDicho);
     };
@@ -353,17 +353,13 @@ function procesarRutaDirecta() {
     
     if (errBox) errBox.classList.add('hidden');
     
-    // CAMBIO DE VISTA LOCAL DIRECTO (Cero llamadas de red)
     switchView('view-loading');
 
     let org = orgField.value.trim().toUpperCase().slice(0, 3);
     let dest = destField.value.trim().toUpperCase().slice(0, 3);
-    let esc = escField ? escField.value.trim().toUpperCase() : "";
 
-    // Guardar la URL global para el botón azul de Google Fly
-    urlGoogleFlightsGlobal = `https://google.com{org}+to+${dest}`;
+    urlGoogleFlightsGlobal = `https://www.google.com/travel/flights?q=flights%20from%20${org}%20to%20${dest}`;
 
-    // TEMPORIZADOR LOCAL PURO DE 30 SEGUNDOS
     let secondsLeft = 30;
     let subText = document.getElementById('load-sub');
     
@@ -392,16 +388,13 @@ function procesarRutaDirecta() {
 function lanzarVuelosYVoz() {
     if (!urlGoogleFlightsGlobal) return;
     
-    // Pasar a la consola de soporte por voz
     switchView('view-split');
     
-    // LANZAMIENTO FÍSICO PERMITIDO: Abre Google Fly de forma flotante con el tamaño exacto
     let w = 920, h = 760;
     let left = (window.screen.width / 2) - (w / 2);
     let top = (window.screen.height / 2) - (h / 2);
     window.open(urlGoogleFlightsGlobal, 'GoogleFlyAuxiliar', `width=${w},height=${h},top=${top},left=${left},resizable=yes,scrollbars=yes`);
     
-    // Iniciar el micrófono de fondo de forma inmediata
     iniciarReconocimientoVoz();
 }
 
