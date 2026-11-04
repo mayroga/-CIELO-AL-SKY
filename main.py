@@ -1,4 +1,3 @@
-
 import os,json,hmac,uuid,math
 from pathlib import Path
 from datetime import datetime,timezone
@@ -16,7 +15,10 @@ APP_DIR=Path(__file__).resolve().parent
 DATABASE_URL=os.getenv("DATABASE_URL","")
 ADMIN_ACCESS_CODE=os.getenv("ADMIN_ACCESS_CODE","")
 ADMIN_API_TOKEN=os.getenv("ADMIN_API_TOKEN","")
-UPLOAD_DIR=Path(os.getenv("UPLOAD_DIR","/var/data/uploads"))
+
+# Corrección de ruta para evitar PermissionError en Render
+UPLOAD_DIR=Path(os.getenv("UPLOAD_DIR",APP_DIR/"uploads"))
+
 PUBLIC_BASE_URL=os.getenv("PUBLIC_BASE_URL","").rstrip("/")
 MAX_IMAGE_SIZE=8*1024*1024
 UPLOAD_DIR.mkdir(parents=True,exist_ok=True)
