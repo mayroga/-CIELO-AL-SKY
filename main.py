@@ -17,7 +17,7 @@ ADMIN_ACCESS_CODE=os.getenv("ADMIN_ACCESS_CODE","")
 ADMIN_API_TOKEN=os.getenv("ADMIN_API_TOKEN","")
 
 # Corrección de ruta para evitar PermissionError en Render
-UPLOAD_DIR=Path(os.getenv("UPLOAD_DIR",APP_DIR/"uploads"))
+UPLOAD_DIR = APP_DIR / "uploads"
 
 PUBLIC_BASE_URL=os.getenv("PUBLIC_BASE_URL","").rstrip("/")
 MAX_IMAGE_SIZE=8*1024*1024
