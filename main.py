@@ -94,3 +94,129 @@ class SettingsBody(BaseModel):
     states: list = Field(default_factory=list)
 
 class TrackingBody(BaseModel):
+code: str
+    step: int
+
+class OrderBody(BaseModel):
+    customer: dict = Field(default_factory=dict)
+    items: list
+    subtotal: float
+    freight_fee: float
+    freight_origin: str
+    freight_type: str
+    weight: float
+    total: float
+    currency: str = "USD"
+
+
+@app.get("/")
+def home():
+    return FileResponse(Path(__file__).with_name("index.html"))
+
+@app.get("/api/health")
+def health():
+    with connect() as conn:
+        conn.execute("SELECT 1")
+    return {"ok":True,"database":"connected"}
+
+@app.get("/api/public")
+def public_data():
+    with connect() as conn:
+        cfg = conn.execute("SELECT data FROM app_config WHERE id=1").fetchone()["data"]
+        rows = conn.execute("SELECT data FROM products ORDER BY updated_at DESC").fetchall()
+    products = [r["data"] for r in rows]
+    return {**cfg, "products":products}
+
+@app.post("/api/admin/login")
+def admin_login(body: LoginBody):
+    if not ADMIN_ACCESS_CODE or not ADMIN_API_TOKEN:
+        raise HTTPException(503, "Faltan ADMIN_ACCESS_CODE o ADMIN_API_TOKEN en Render")
+    if not hmac.compare_digest(body.pin, ADMIN_ACCESS_CODE):
+        raise HTTPException(401, "PIN incorrecto")
+    return {"token":ADMIN_API_TOKEN}
+
+@app.get("/api/admin/settings")
+def admin_settings(authorization: Optional[str] = Header(default=None)):
+    require_admin(authorization)
+    with connect() as conn:
+        return conn.execute("SELECT data FROM app_config WHERE id=1").fetchone()["data"]
+
+@app.put("/api/admin/settings")
+def update_settings(body: SettingsBody, authorization: Optional[str] = Header(default=None)):
+    require_admin(authorization)
+    if len(body.states) == 0 or any(not isinstance(s, dict) or not s.get("name") or float(s.get("fee", -1)) < 0 for s in body.states):
+        raise HTTPException(400, "La lista de orígenes o sus tarifas no es válida")
+    rates = {"air":float(body.rates.get("air",0)), "sea":float(body.rates.get("sea",0))}
+    if rates["air"] < 0 or rates["sea"] < 0:
+        raise HTTPException(400, "Las tarifas por libra no pueden ser negativas")
+    with connect() as conn:
+        cfg = conn.execute("SELECT data FROM app_config WHERE id=1").fetchone()["data"]
+        cfg["rates"] = rates
+        cfg["states"] = body.states
+        conn.execute("UPDATE app_config SET data=%s WHERE id=1", (Jsonb(cfg),))
+    return {"ok":True,"rates":rates,"states":body.states}
+
+@app.post("/api/admin/products")
+async def save_product(data: str = Form(...), image: Optional[UploadFile] = File(default=None), authorization: Optional[str] = Header(default=None)):
+    require_admin(authorization)
+    try:
+        product = json.loads(data)
+    except Exception:
+        raise HTTPException(400, "Datos del producto inválidos")
+    product_id = str(product.get("id") or uuid.uuid4())
+    product["id"] = product_id
+    if image and image.filename:
+        content_type = image.content_type or ""
+        if not content_type.startswith("image/"):
+            raise HTTPException(400, "El archivo debe ser una imagen")
+        raw = await_read = image.file.read()
+        if len(raw) > 8 * 1024 * 1024:
+            raise HTTPException(413, "La imagen supera el límite de 8 MB")
+        ext = Path(image.filename).suffix.lower()
+        if ext not in {".jpg",".jpeg",".png",".webp",".gif"}:
+            ext = ".jpg"
+        filename = f"{uuid.uuid4().hex}{ext}"
+        (UPLOAD_DIR / filename).write_bytes(raw)
+        base = os.getenv("PUBLIC_BASE_URL", "").rstrip("/")
+        product["img"] = f"{base}/uploads/{filename}" if base else f"/uploads/{filename}"
+    if not product.get("name") or float(product.get("price", -1)) < 0:
+        raise HTTPException(400, "Nombre o precio de producto inválido")
+    with connect() as conn:
+        conn.execute("INSERT INTO products(id,data,updated_at) VALUES(%s,%s,NOW()) ON CONFLICT(id) DO UPDATE SET data=EXCLUDED.data,updated_at=NOW()", (product_id,Jsonb(product)))
+    return {"ok":True,"product":product}
+
+@app.delete("/api/admin/products/{product_id}")
+def delete_product(product_id: str, authorization: Optional[str] = Header(default=None)):
+    require_admin(authorization)
+    with connect() as conn:
+        conn.execute("DELETE FROM products WHERE id=%s", (product_id,))
+    return {"ok":True}
+
+@app.get("/api/trackings/{code}")
+def get_tracking(code: str):
+    with connect() as conn:
+        row = conn.execute("SELECT data FROM trackings WHERE code=%s", (code.upper(),)).fetchone()
+    if not row:
+        raise HTTPException(404, "Código de guía no encontrado")
+    return {"code":code.upper(), **row["data"]}
+
+@app.put("/api/admin/tracking")
+def update_tracking(body: TrackingBody, authorization: Optional[str] = Header(default=None)):
+    require_admin(authorization)
+    if not body.code.strip() or body.step not in range(1,6):
+        raise HTTPException(400, "Código o etapa de rastreo inválidos")
+    data = {"step":body.step,"lastUpdate":datetime.now(timezone.utc).astimezone().strftime("%d/%m/%Y %I:%M %p")}
+    with connect() as conn:
+        conn.execute("INSERT INTO trackings(code,data,updated_at) VALUES(%s,%s,NOW()) ON CONFLICT(code) DO UPDATE SET data=EXCLUDED.data,updated_at=NOW()", (body.code.strip().upper(),Jsonb(data)))
+    return {"ok":True,"code":body.code.strip().upper(),**data}
+
+@app.post("/api/orders")
+def create_order(body: OrderBody):
+    if not body.items or body.total < 0 or body.freight_fee < 0:
+        raise HTTPException(400, "El pedido no contiene datos válidos")
+    order_id = uuid.uuid4()
+    snapshot = body.model_dump()
+    snapshot["created_at"] = datetime.now(timezone.utc).isoformat()
+    with connect() as conn:
+        conn.execute("INSERT INTO orders(id,data) VALUES(%s,%s)", (order_id,Jsonb(snapshot)))
+    return {"ok":True,"order_id":str(order_id),"created_at":snapshot["created_at"]} 
