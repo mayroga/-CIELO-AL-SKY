@@ -1,6 +1,7 @@
 fastapi
 uvicorn
 jinja2
-python-multipart
 requests
 google-genai
+psycopg[binary]==3.2.9
+python-multipart==0.0.20
