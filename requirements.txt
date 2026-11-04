@@ -3,5 +3,5 @@ uvicorn
 jinja2
 requests
 google-genai
-psycopg[binary]==3.2.9
-python-multipart==0.0.20
+psycopg[binary]
+python-multipart
